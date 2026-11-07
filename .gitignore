@@ -2,3 +2,7 @@ node_modules/
 coverage/
 *.log
 .DS_Store
+
+# Local study notes — not part of the repo
+LEARNING.md
+
