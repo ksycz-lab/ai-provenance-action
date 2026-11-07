@@ -1,0 +1,42 @@
+name: AI Provenance Audit
+description: Record declared AI-assisted PR changes, evaluate policy gates, and publish an audit report.
+branding:
+  icon: shield
+  color: blue
+inputs:
+  github-token:
+    description: GitHub token for REST API access
+    default: ${{ github.token }}
+    required: false
+  config-path:
+    description: Path to ai-provenance config on the base branch
+    default: .github/ai-provenance.yml
+    required: false
+  mutation-report:
+    description: Path to a Stryker mutation-testing-report JSON from an earlier job
+    required: false
+    default: ""
+  report-path:
+    description: Where to write the JSON audit report
+    default: ai-provenance-report.json
+    required: false
+  upload-artifact:
+    description: Upload the report as a workflow artifact
+    default: "true"
+    required: false
+  pr-comment:
+    description: Create or update a sticky pull request comment
+    default: "false"
+    required: false
+outputs:
+  ai_tagged:
+    description: Whether any commit or label was classified as AI-assisted
+  ai_files:
+    description: JSON array of file paths touched by AI-tagged commits
+  report_path:
+    description: Path to the written JSON report
+  verdict:
+    description: Overall policy result (pass, warn, or fail)
+runs:
+  using: node24
+  main: dist/index.js

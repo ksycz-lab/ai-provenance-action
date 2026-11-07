@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ksycz/ai-provenance-action/schema/config.v1.schema.json",
+  "title": "AI Provenance Config v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1 }
+  },
+  "required": ["version"]
+}
