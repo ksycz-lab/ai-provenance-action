@@ -1,0 +1,4 @@
+Fix empty cart state.
+
+Assisted-by: Cursor
+Generated-by: Composer

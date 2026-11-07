@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0-M1 — repository scaffold and CI (in progress).
+**Current focus:** P1-M1 complete locally. Next: P1-M2 rule matching (waiting for approval).
 
 ---
 
@@ -145,7 +145,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 
 | Phase | Name | Status | Focus |
 |---|---|---|---|
-| 1 | Detection core | ⏳ Planned | Pure trailer parsing, rule matching and diff-to-lines mapping |
+| 1 | Detection core | 🚧 In progress | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | ⏳ Planned | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ⏳ Planned | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
@@ -208,12 +208,12 @@ _To be filled in after completion._
 
 # Phase 1 — Detection core
 
-**Status:** ⏳ Planned · **Focus:** pure functions that turn commits, labels and diffs into "what was AI-assisted, and why".
+**Status:** 🚧 In progress · **Focus:** pure functions that turn commits, labels and diffs into "what was AI-assisted, and why".
 
 ## P1-M1 — Trailer parsing
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P0-M1
 
 ### Goal
@@ -247,17 +247,23 @@ _To be filled in after completion._
 
 ### Acceptance criteria
 
-- [ ] All P1-M1 cases pass
-- [ ] Function is pure and fully typed; 100 % branch coverage
+- [x] All P1-M1 cases pass
+- [x] Function is pure and fully typed; 100 % branch coverage
 
 ### Completion checklist
 
-- [ ] Fixtures for real-world messages (Claude Code, Copilot, Cursor) under `test/fixtures/commits/`
-- [ ] Implementation notes filled in
+- [x] Fixtures for real-world messages (Claude Code, Copilot, Cursor) under `test/fixtures/commits/`
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `parseTrailers()` in `src/core/parse-trailers.ts` copies `git interpret-trailers --parse` (Git 2.50): last paragraph only, after a blank line; unfold continuation lines with a space.
+
+**Architectural decisions:** Pure function, no I/O. Git-generated prefix that unlocks mixed blocks is only `Signed-off-by: ` (and cherry-pick lines), not `Co-authored-by`. Matching AI tools is P1-M2.
+
+**Deviations:** P1-M1-07 also asserts the Signed-off-by 25% exception and an orphan continuation, so we match Git rather than treating every mixed paragraph as empty.
+
+**Tests implemented:** P1-M1-01 … P1-M1-10 plus real-world fixtures.
 
 ## P1-M2 — Rule matching (trailers and labels)
 
@@ -988,7 +994,7 @@ P0-M1 Scaffold
 | Milestone | Status | Completed |
 |---|---|---|
 | P0-M1 — Repository scaffold and CI | 🚧 In progress | — |
-| P1-M1 — Trailer parsing | ⏳ Planned | — |
+| P1-M1 — Trailer parsing | ✅ Completed | 2026-11-07 |
 | P1-M2 — Rule matching | ⏳ Planned | — |
 | P1-M3 — Diff to files and lines | ⏳ Planned | — |
 | P2-M1 — Config schema, defaults and validation | ⏳ Planned | — |
