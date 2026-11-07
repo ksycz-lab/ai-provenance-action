@@ -68,7 +68,9 @@ Unknown keys fail. The error path looks like `policy.gates[0].treshold` and may 
 | `label`      | For `required-label`: the label that must be present.             |
 | `min`        | For `approvals`: how many non-author approvals are required.      |
 
-Gate evaluation is Phase 3. This milestone only stores and validates the fields.
+`required-label` matches PR labels case-insensitively. `approvals` counts each reviewer’s **latest decisive** review (`APPROVED` or `CHANGES_REQUESTED`). `COMMENTED` does not change that state. Dismissed reviews, the PR author, and `type: Bot` reviewers do not count.
+
+Gates see the PR **at the moment the workflow runs**. A label or approval added later only counts on a re-run, so also trigger on `pull_request_review` and `labeled` if you use these gates.
 
 ## `limits`
 

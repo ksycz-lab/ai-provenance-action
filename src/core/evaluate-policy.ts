@@ -1,8 +1,17 @@
 import type { Config, GateConfig, PolicyMode } from "./load-config.js";
 
+export type ReviewInput = {
+  state: string;
+  submittedAt: string;
+  user: { login: string; type?: string } | null;
+};
+
 export type PolicyContext = {
   aiTagged: boolean;
   truncated: boolean;
+  prLabels?: string[];
+  prAuthorLogin?: string;
+  reviews?: ReviewInput[];
 };
 
 export type GateOutcome = "pass" | "fail" | "skipped" | "error";
@@ -10,6 +19,7 @@ export type GateOutcome = "pass" | "fail" | "skipped" | "error";
 export type GateEvaluation = {
   result: Exclude<GateOutcome, "error">;
   message: string;
+  details?: unknown;
 };
 
 /** One handler per gate `type`. The engine never switches on type itself. */
