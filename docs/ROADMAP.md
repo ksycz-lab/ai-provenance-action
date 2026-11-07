@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P1-M1 complete locally. Next: P1-M2 rule matching (waiting for approval).
+**Current focus:** P1-M2 complete locally. Next: P1-M3 diff to files and lines (waiting for approval).
 
 ---
 
@@ -267,8 +267,8 @@ _To be filled in after completion._
 
 ## P1-M2 — Rule matching (trailers and labels)
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P1-M1
 
 ### Goal
@@ -301,16 +301,22 @@ _To be filled in after completion._
 
 ### Acceptance criteria
 
-- [ ] All P1-M2 cases pass
-- [ ] The classification output type carries `reasons: { rule: string; matched: string }[]` per commit
+- [x] All P1-M2 cases pass
+- [x] The classification output type carries `reasons: { rule: string; matched: string }[]` per commit
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `classifyCommits(commits, labels, rules)` parses each message with `parseTrailers`, matches configured trailer rules, and applies PR labels to every commit. Each match is a `{ rule, matched }` reason so the report can say *why*.
+
+**Architectural decisions:** Default rules live in `DEFAULT_DETECTION_RULES` until P2-M1 loads YAML. Trailer reasons use `trailer:<configured key>`; labels use `label:<configured name>` with the actual PR label in `matched`. Value regexes are case-insensitive and run only on the trailer value.
+
+**Deviations:** none.
+
+**Tests implemented:** P1-M2-01 … P1-M2-10.
 
 ## P1-M3 — Diff to files and lines
 
@@ -995,7 +1001,7 @@ P0-M1 Scaffold
 |---|---|---|
 | P0-M1 — Repository scaffold and CI | 🚧 In progress | — |
 | P1-M1 — Trailer parsing | ✅ Completed | 2026-11-07 |
-| P1-M2 — Rule matching | ⏳ Planned | — |
+| P1-M2 — Rule matching | ✅ Completed | 2026-11-07 |
 | P1-M3 — Diff to files and lines | ⏳ Planned | — |
 | P2-M1 — Config schema, defaults and validation | ⏳ Planned | — |
 | P3-M1 — Evaluation engine and enforce/warn | ⏳ Planned | — |
