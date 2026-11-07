@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P3-M1 complete locally. Next: P3-M2 mutation-score gate (waiting for approval).
+**Current focus:** P3-M3 complete locally. Next: P4-M1 JSON report (P3-M2 may still be merging).
 
 ---
 
@@ -521,8 +521,8 @@ _To be filled in after completion._
 
 ## P3-M3 — Required-label and approvals gates
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P3-M1
 
 ### Goal
@@ -551,15 +551,21 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 ### Acceptance criteria
 
-- [ ] All P3-M3 cases pass
+- [x] All P3-M3 cases pass
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `requiredLabelGate` and `approvalsGate` implement `Gate`. Labels match case-insensitively. Approvals reduce reviews per login to the latest `APPROVED` or `CHANGES_REQUESTED`; `COMMENTED` is ignored; `DISMISSED`, the PR author, and `type: Bot` do not count.
+
+**Architectural decisions:** Review data is already-fetched (`PolicyContext.reviews`), no I/O. `min` defaults to 1.
+
+**Deviations:** none. Docs note that `pull_request_review` and `labeled` should re-run the workflow.
+
+**Tests implemented:** P3-M3-01 … P3-M3-07.
 
 ---
 
@@ -1024,7 +1030,7 @@ P0-M1 Scaffold
 | P2-M1 — Config schema, defaults and validation | ✅ Completed | 2026-11-07 |
 | P3-M1 — Evaluation engine and enforce/warn | ✅ Completed | 2026-11-07 |
 | P3-M2 — Mutation-score gate | ⏳ Planned | — |
-| P3-M3 — Required-label and approvals gates | ⏳ Planned | — |
+| P3-M3 — Required-label and approvals gates | ✅ Completed | 2026-11-07 |
 | P4-M1 — JSON report and schema | ⏳ Planned | — |
 | P4-M2 — Markdown rendering and escaping | ⏳ Planned | — |
 | P5-M1 — REST data fetching | ⏳ Planned | — |
