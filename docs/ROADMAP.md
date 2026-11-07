@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P2-M1 complete locally. Next: P3-M1 policy evaluation engine (waiting for approval).
+**Current focus:** P3-M1 complete locally. Next: P3-M2 mutation-score gate (waiting for approval).
 
 ---
 
@@ -147,7 +147,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 |---|---|---|---|
 | 1 | Detection core | 🚧 In progress | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | 🚧 In progress | YAML config schema, defaults, validation errors |
-| 3 | Policy engine | ⏳ Planned | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
+| 3 | Policy engine | 🚧 In progress | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
@@ -429,12 +429,12 @@ _To be filled in after completion._
 
 # Phase 3 — Policy engine
 
-**Status:** ⏳ Planned · **Focus:** decide pass, warn or fail from classification, config and evidence, with no I/O.
+**Status:** 🚧 In progress · **Focus:** decide pass, warn or fail from classification, config and evidence, with no I/O.
 
 ## P3-M1 — Evaluation engine and enforce/warn
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P2-M1
 
 ### Goal
@@ -461,16 +461,22 @@ _To be filled in after completion._
 
 ### Acceptance criteria
 
-- [ ] All P3-M1 cases pass
-- [ ] Gates implement one `Gate` interface; adding a gate type touches no engine code
+- [x] All P3-M1 cases pass
+- [x] Gates implement one `Gate` interface; adding a gate type touches no engine code
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `evaluatePolicy(ctx, config, handlers)` skips gates when there is no AI, fail-fast skips them when input is truncated and `on-truncated: fail`, otherwise runs every configured gate. `fail`/`error` become verdict `fail` or `warn` from the gate's mode (gate `mode` overrides global `policy.mode`).
+
+**Architectural decisions:** Handlers are injected (`Gate` with a `type` string). The engine never switches on mutation vs label vs approvals. Unknown types and thrown errors both become `result: error`; later gates still run.
+
+**Deviations:** Truncation with `on-truncated: fail` skips remaining gates (fail-safe: we may have missed AI commits). `report-only` is both `reason` and `note` so either field is easy to assert.
+
+**Tests implemented:** P3-M1-01 … P3-M1-08.
 
 ## P3-M2 — Mutation-score gate (Stryker report)
 
@@ -1016,7 +1022,7 @@ P0-M1 Scaffold
 | P1-M2 — Rule matching | ✅ Completed | 2026-11-07 |
 | P1-M3 — Diff to files and lines | ✅ Completed | 2026-11-07 |
 | P2-M1 — Config schema, defaults and validation | ✅ Completed | 2026-11-07 |
-| P3-M1 — Evaluation engine and enforce/warn | ⏳ Planned | — |
+| P3-M1 — Evaluation engine and enforce/warn | ✅ Completed | 2026-11-07 |
 | P3-M2 — Mutation-score gate | ⏳ Planned | — |
 | P3-M3 — Required-label and approvals gates | ⏳ Planned | — |
 | P4-M1 — JSON report and schema | ⏳ Planned | — |
