@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P1-M3 complete locally. Next: P2-M1 config schema (waiting for approval).
+**Current focus:** P2-M1 complete locally. Next: P3-M1 policy evaluation engine (waiting for approval).
 
 ---
 
@@ -146,7 +146,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | Phase | Name | Status | Focus |
 |---|---|---|---|
 | 1 | Detection core | 🚧 In progress | Pure trailer parsing, rule matching and diff-to-lines mapping |
-| 2 | Configuration | ⏳ Planned | YAML config schema, defaults, validation errors |
+| 2 | Configuration | 🚧 In progress | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ⏳ Planned | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
@@ -374,12 +374,12 @@ _To be filled in after completion._
 
 # Phase 2 — Configuration
 
-**Status:** ⏳ Planned · **Focus:** a small, strictly validated YAML config with helpful errors.
+**Status:** 🚧 In progress · **Focus:** a small, strictly validated YAML config with helpful errors.
 
 ## P2-M1 — Config schema, defaults and validation
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P1-M2
 
 ### Goal
@@ -408,16 +408,22 @@ _To be filled in after completion._
 
 ### Acceptance criteria
 
-- [ ] All P2-M1 cases pass
-- [ ] `docs/configuration.md` documents every field, generated or checked against the schema
+- [x] All P2-M1 cases pass
+- [x] `docs/configuration.md` documents every field, generated or checked against the schema
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `loadConfig(yamlText | undefined)` parses YAML, validates against `schema/config.v1.schema.json` (Ajv 2020-12), compiles trailer regexes, and merges with defaults. Missing file (`undefined`) is `source: defaults` with no gates.
+
+**Architectural decisions:** User `labels` / `trailers` replace the default lists. YAML stays kebab-case; the in-memory `Config` uses camelCase (`onMissing`, `maxCommits`). Regexes longer than 200 characters are rejected before `new RegExp`. Unknown keys report a YAML path and a close-key suggestion (`treshold` → `threshold`).
+
+**Deviations:** none.
+
+**Tests implemented:** P2-M1-01 … P2-M1-10. Docs field names are asserted against the schema.
 
 ---
 
@@ -1009,7 +1015,7 @@ P0-M1 Scaffold
 | P1-M1 — Trailer parsing | ✅ Completed | 2026-11-07 |
 | P1-M2 — Rule matching | ✅ Completed | 2026-11-07 |
 | P1-M3 — Diff to files and lines | ✅ Completed | 2026-11-07 |
-| P2-M1 — Config schema, defaults and validation | ⏳ Planned | — |
+| P2-M1 — Config schema, defaults and validation | ✅ Completed | 2026-11-07 |
 | P3-M1 — Evaluation engine and enforce/warn | ⏳ Planned | — |
 | P3-M2 — Mutation-score gate | ⏳ Planned | — |
 | P3-M3 — Required-label and approvals gates | ⏳ Planned | — |
