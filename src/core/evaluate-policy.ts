@@ -6,12 +6,19 @@ export type ReviewInput = {
   user: { login: string; type?: string } | null;
 };
 
+export type MutationReportInput =
+  | { kind: "missing" }
+  | { kind: "invalid"; message: string }
+  | { kind: "present"; value: unknown };
+
 export type PolicyContext = {
   aiTagged: boolean;
   truncated: boolean;
   prLabels?: string[];
   prAuthorLogin?: string;
   reviews?: ReviewInput[];
+  aiFiles?: string[];
+  mutationReport?: MutationReportInput;
 };
 
 export type GateOutcome = "pass" | "fail" | "skipped" | "error";
@@ -34,6 +41,7 @@ export type EvaluatedGate = {
   mode: PolicyMode;
   result: GateOutcome;
   message: string;
+  details?: unknown;
 };
 
 export type PolicyVerdict = "pass" | "warn" | "fail";
@@ -109,6 +117,7 @@ function runGate(
       mode,
       result: evaluation.result,
       message: evaluation.message,
+      ...(evaluation.details !== undefined ? { details: evaluation.details } : {}),
     };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);

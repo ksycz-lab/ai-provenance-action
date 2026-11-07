@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P3-M3 complete locally. Next: P4-M1 JSON report (P3-M2 may still be merging).
+**Current focus:** P3 complete. Next: P4-M1 JSON report.
 
 ---
 
@@ -147,7 +147,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 |---|---|---|---|
 | 1 | Detection core | 🚧 In progress | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | 🚧 In progress | YAML config schema, defaults, validation errors |
-| 3 | Policy engine | 🚧 In progress | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
+| 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
@@ -429,7 +429,7 @@ _To be filled in after completion._
 
 # Phase 3 — Policy engine
 
-**Status:** 🚧 In progress · **Focus:** decide pass, warn or fail from classification, config and evidence, with no I/O.
+**Status:** ✅ Completed · **Focus:** decide pass, warn or fail from classification, config and evidence, with no I/O.
 
 ## P3-M1 — Evaluation engine and enforce/warn
 
@@ -480,8 +480,8 @@ _To be filled in after completion._
 
 ## P3-M2 — Mutation-score gate (Stryker report)
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P3-M1
 
 ### Goal
@@ -507,17 +507,23 @@ Parse a Stryker report in the `mutation-testing-report-schema` format and comput
 
 ### Acceptance criteria
 
-- [ ] All P3-M2 cases pass
-- [ ] The report records the score, threshold, mutant counts by status and the files in scope
+- [x] All P3-M2 cases pass
+- [x] The report records the score, threshold, mutant counts by status and the files in scope
 
 ### Completion checklist
 
-- [ ] Real Stryker fixtures committed with a note on the version that generated them
-- [ ] Implementation notes filled in
+- [x] Real Stryker fixtures committed with a note on the version that generated them
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `mutationScoreGate` implements `Gate` (`type: mutation-score`). It does not read disk: `PolicyContext.mutationReport` is `missing` | `invalid` | `present`. Score is Stryker’s detected/valid (Killed+Timeout over all except CompileError, RuntimeError, Ignored). `scope: ai-files` matches normalised paths.
+
+**Architectural decisions:** Malformed reports **throw**, so the engine records `error` (P3-M1-06). Missing reports use `on-missing` (`fail` or `skip`). Details (`score`, `threshold`, `counts`, `filesInScope`) pass through `GateEvaluation.details` for the later JSON report.
+
+**Deviations:** Fixtures are reduced schema-shaped documents, not dumps from a live Stryker run; versions are noted in `test/fixtures/stryker/README.md`.
+
+**Tests implemented:** P3-M2-01 … P3-M2-08.
 
 ## P3-M3 — Required-label and approvals gates
 
@@ -1029,7 +1035,7 @@ P0-M1 Scaffold
 | P1-M3 — Diff to files and lines | ✅ Completed | 2026-11-07 |
 | P2-M1 — Config schema, defaults and validation | ✅ Completed | 2026-11-07 |
 | P3-M1 — Evaluation engine and enforce/warn | ✅ Completed | 2026-11-07 |
-| P3-M2 — Mutation-score gate | ⏳ Planned | — |
+| P3-M2 — Mutation-score gate | ✅ Completed | 2026-11-07 |
 | P3-M3 — Required-label and approvals gates | ✅ Completed | 2026-11-07 |
 | P4-M1 — JSON report and schema | ⏳ Planned | — |
 | P4-M2 — Markdown rendering and escaping | ⏳ Planned | — |
