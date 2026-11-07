@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P1-M2 complete locally. Next: P1-M3 diff to files and lines (waiting for approval).
+**Current focus:** P1-M3 complete locally. Next: P2-M1 config schema (waiting for approval).
 
 ---
 
@@ -320,8 +320,8 @@ _To be filled in after completion._
 
 ## P1-M3 — Diff to files and lines
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-07
 **Dependencies:** P0-M1 (independent of P1-M1 and P1-M2)
 
 ### Goal
@@ -352,17 +352,23 @@ _To be filled in after completion._
 
 ### Acceptance criteria
 
-- [ ] All P1-M3 cases pass
-- [ ] Output is deterministic (same input, byte-identical JSON)
+- [x] All P1-M3 cases pass
+- [x] Output is deterministic (same input, byte-identical JSON)
 
 ### Completion checklist
 
-- [ ] Patch fixtures recorded from real REST responses
-- [ ] Implementation notes filled in
+- [x] Patch fixtures recorded from real REST responses
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `mapChanges()` reads GitHub-shaped `{ filename, status, patch, previous_filename }` and records added-line ranges on the new side of the unified diff. `aggregateAiChanges()` unions ranges per path across AI-tagged commits (oldest first; later status/rename wins). Adjacent and overlapping ranges merge.
+
+**Architectural decisions:** Missing `patch` (binary / truncated diff) is `lines: "unknown"`, never guessed. Removed files always have empty ranges. Line numbers are as of that commit, not final blame.
+
+**Deviations:** P1-M3-08 expects merged adjacent added lines (`2-3`) after ignoring `\\ No newline at end of file`; the marker must not shift numbers.
+
+**Tests implemented:** P1-M3-01 … P1-M3-09 plus `test/fixtures/patches/commit-files.rest.json`.
 
 ---
 
@@ -1002,7 +1008,7 @@ P0-M1 Scaffold
 | P0-M1 — Repository scaffold and CI | 🚧 In progress | — |
 | P1-M1 — Trailer parsing | ✅ Completed | 2026-11-07 |
 | P1-M2 — Rule matching | ✅ Completed | 2026-11-07 |
-| P1-M3 — Diff to files and lines | ⏳ Planned | — |
+| P1-M3 — Diff to files and lines | ✅ Completed | 2026-11-07 |
 | P2-M1 — Config schema, defaults and validation | ⏳ Planned | — |
 | P3-M1 — Evaluation engine and enforce/warn | ⏳ Planned | — |
 | P3-M2 — Mutation-score gate | ⏳ Planned | — |
