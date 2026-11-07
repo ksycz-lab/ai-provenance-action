@@ -4,8 +4,73 @@
   "title": "AI Provenance Config v1",
   "type": "object",
   "additionalProperties": false,
+  "required": ["version"],
   "properties": {
-    "version": { "type": "integer", "const": 1 }
+    "version": { "type": "integer", "const": 1 },
+    "detection": { "$ref": "#/$defs/detection" },
+    "policy": { "$ref": "#/$defs/policy" },
+    "limits": { "$ref": "#/$defs/limits" }
   },
-  "required": ["version"]
+  "$defs": {
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trailers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/trailerRule" }
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "trailerRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["enforce", "warn"] },
+        "gates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": ["mutation-score", "required-label", "approvals"]
+        },
+        "mode": { "enum": ["enforce", "warn"] },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 100 },
+        "scope": { "enum": ["ai-files", "all"] },
+        "on-missing": { "enum": ["fail", "warn", "skip"] },
+        "label": { "type": "string", "minLength": 1 },
+        "min": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max-commits": { "type": "integer", "minimum": 1, "maximum": 250 },
+        "max-files": { "type": "integer", "minimum": 1, "maximum": 3000 },
+        "on-truncated": { "enum": ["fail", "warn"] }
+      }
+    }
+  }
 }
