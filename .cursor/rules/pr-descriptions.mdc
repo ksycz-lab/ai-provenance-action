@@ -1,0 +1,19 @@
+---
+description: Write GitHub PR bodies in plain language, matching PR #1
+alwaysApply: true
+---
+
+# Pull request descriptions
+
+When creating or editing a PR, write for a reviewer who has not seen the chat. No pseudocode-as-the-summary, no “merge door”, no “blast radius”, no jargon-first structure.
+
+Follow this shape (see https://github.com/ksycz/ai-provenance-action/pull/1):
+
+1. **What this PR does** — Start with the idea in everyday words, then a tiny real example, then the function/file. Say what it does **not** do if that avoids confusion (next milestone, not AI detection, etc.).
+2. **Why it is written this way** — Short bullets: purity, Git compatibility, fail-safe behaviour.
+3. **How to check it** — Exact commands and test IDs (`P1-M1-01`). Note if `dist/` is unchanged.
+4. **Risk** — One short paragraph: revert cost and whether the Action entrypoint / runtime changed.
+
+Tone: complete sentences, simple words. Lead with what is true. Prefer a concrete commit message or YAML snippet over an algorithm listing.
+
+Do not pad with Evidence/Before-After unless a failing-then-passing test is the easiest way to show the bugfix. Never add “Made with Cursor”.
