@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P3 and P4-M1 complete. Next: P4-M2 Markdown rendering.
+**Current focus:** P0–P4 complete. Next: P5-M1 REST data fetching.
 
 ---
 
@@ -149,7 +149,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | 1 | Detection core | ✅ Completed | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
-| 4 | Audit report | 🚧 In progress | Versioned JSON report and escaped Markdown rendering |
+| 4 | Audit report | ✅ Completed | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
 | 7 | Release and Marketplace | ⏳ Planned | README, threat model, release automation, `v1` tag |
@@ -587,7 +587,7 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 # Phase 4 — Audit report
 
-**Status:** 🚧 In progress · **Focus:** one versioned JSON document, and one safe Markdown view of it.
+**Status:** ✅ Completed · **Focus:** one versioned JSON document, and one safe Markdown view of it.
 
 ## P4-M1 — JSON report and schema
 
@@ -636,8 +636,8 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 ## P4-M2 — Markdown rendering and escaping
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P4-M1
 
 ### Goal
@@ -660,19 +660,29 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 | P4-M2-06 | Comment output stays under GitHub's 65 536-character limit for a 3000-file fixture |
 | P4-M2-07 | The no-AI case renders a single line |
 | P4-M2-08 | Snapshot tests for pass, warn, fail and no-AI |
+| P4-M2-09 | Rendered output contains no banned wording ("compliant", "certified", "detects AI"), for every outcome and both variants |
+| P4-M2-10 | Truncated input: the verdict line says the gates were not run, and the truncation warning is shown |
+| P4-M2-11 | No gates configured: the verdict line says it is a report only |
+| P4-M2-12 | A removed file is listed with "no added lines"; a one-line range prints as a single number |
 
 ### Acceptance criteria
 
-- [ ] All P4-M2 cases pass
-- [ ] The wording follows the evidence-not-compliance rule (checked by a test that greps rendered output for banned words such as "compliant" and "certified")
+- [x] All P4-M2 cases pass
+- [x] The wording follows the evidence-not-compliance rule (checked by a test that greps rendered output for banned words such as "compliant" and "certified")
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `renderMarkdown(report, { variant })` in `src/core/render-markdown.ts` renders the job summary and the sticky PR comment from the P4-M1 report only. Order: verdict line (icon + word + counts), an optional truncation warning, the gates table, collapsible `<details>` lists of AI-tagged commits and touched files, and a footer in the evidence-not-compliance wording. The comment variant is the summary with `<!-- ai-provenance-action -->` as its first line.
+
+**Architectural decisions:** `escapeMarkdown()` puts every piece of untrusted text on one line, turns HTML and Markdown specials into numeric entities, and adds an invisible word joiner (U+2060) after `@` and `#`. Entities alone are not enough there: GitHub links mentions and issue numbers after it decodes entities. Lists are capped at 50. A length guard halves the cap until the output fits a 60 000-character budget (headroom under GitHub's 65 536 limit), down to no lists at all.
+
+**Deviations:** Added P4-M2-09 (banned-wording test, the acceptance criterion as a test) and P4-M2-10 … 12 for the truncated, report-only and removed-file branches. Those three tests were written after the code; each was checked to fail with its branch broken on purpose, then pass with it restored. The "…and N more" line points to "the JSON report", the artifact's content, because the artifact name is only decided in P5-M3. The hostile-input output was also checked with `cmark-gfm`: table columns stay intact, `<script>` shows as text, and no `@name` or `#number` survives in linkable form.
+
+**Tests implemented:** P4-M2-01 … P4-M2-12, with Markdown snapshots in `test/__snapshots__/P4-M2.*.md`. The report fixtures come from the reviewed P4-M1 JSON snapshot.
 
 ---
 
@@ -1055,7 +1065,7 @@ P0-M1 Scaffold
 | P3-M2 — Mutation-score gate | ✅ Completed | 2026-11-07 |
 | P3-M3 — Required-label and approvals gates | ✅ Completed | 2026-11-07 |
 | P4-M1 — JSON report and schema | ✅ Completed | 2026-11-08 |
-| P4-M2 — Markdown rendering and escaping | ⏳ Planned | — |
+| P4-M2 — Markdown rendering and escaping | ✅ Completed | 2026-11-08 |
 | P5-M1 — REST data fetching | ⏳ Planned | — |
 | P5-M2 — Config from the base branch | ⏳ Planned | — |
 | P5-M3 — Outputs, job summary and artifact | ⏳ Planned | — |
@@ -1068,7 +1078,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P3 complete, P4 in progress. Next: P4-M2.
+**Phase status:** P0–P4 complete. Next: P5-M1.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
