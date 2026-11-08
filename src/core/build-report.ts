@@ -24,7 +24,12 @@ export type ReportInput = {
     headSha: string;
     author: string | null;
   };
-  config: { source: "base-branch" | "defaults"; path: string; sha256: string | null };
+  config: {
+    source: "base-branch" | "defaults";
+    path: string;
+    sha256: string | null;
+    changedInPr: boolean;
+  };
   commits: { sha: string; author: string | null; message: string }[];
   classification: Classification;
   aiChanges: FileChange[];
@@ -183,7 +188,12 @@ export function buildReport(input: ReportInput): Report {
       headSha: pullRequest.headSha,
       author: pullRequest.author,
     },
-    config: { source: config.source, path: config.path, sha256: config.sha256 },
+    config: {
+      source: config.source,
+      path: config.path,
+      sha256: config.sha256,
+      changedInPr: config.changedInPr,
+    },
     commits: buildCommits(input),
     aiChanges,
     gates: buildGates(input.policy.gates),

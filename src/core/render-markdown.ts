@@ -160,6 +160,15 @@ function filesSection(changes: FileChange[], cap: number): string[] {
   ];
 }
 
+function configNote(report: Report): string[] {
+  return report.config.changedInPr
+    ? [
+        `> ℹ️ This pull request changes the config file ${escapeMarkdown(report.config.path)}. It was judged by the version on the base branch.`,
+        "",
+      ]
+    : [];
+}
+
 function limitationsSection(report: Report): string[] {
   const notable = report.limitations.filter(
     (l) => l.code === "truncated-commits" || l.code === "truncated-files",
@@ -179,6 +188,7 @@ function renderBody(report: Report, cap: number): string {
   const lines = [
     verdictLine(report),
     "",
+    ...configNote(report),
     ...limitationsSection(report),
     ...gatesTable(report.gates),
     ...(cap > 0 ? commitsSection(report.commits, cap) : []),
