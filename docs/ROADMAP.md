@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P1–P3 complete. Next: P4-M1 JSON report. P0-M1 still needs branch protection and two one-off CI checks (P0-M1-02, P0-M1-03).
+**Current focus:** P0–P3 complete. Next: P4-M1 JSON report.
 
 ---
 
@@ -145,7 +145,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 
 | Phase | Name | Status | Focus |
 |---|---|---|---|
-| 0 | Scaffold | 🚧 In progress | Wired repo, CI, check-dist and core-purity rule |
+| 0 | Scaffold | ✅ Completed | Wired repo, CI, check-dist and core-purity rule |
 | 1 | Detection core | ✅ Completed | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
@@ -161,12 +161,12 @@ The phases run from easiest to hardest: Phases 1-4 are pure functions with fixtu
 
 # Phase 0 — Scaffold
 
-**Status:** 🚧 In progress · **Focus:** an empty but fully wired repo, so every later milestone starts red-green straight away.
+**Status:** ✅ Completed · **Focus:** an empty but fully wired repo, so every later milestone starts red-green straight away.
 
 ## P0-M1 — Repository scaffold and CI
 
-**Status:** 🚧 In progress
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** none
 
 ### Goal
@@ -198,16 +198,21 @@ A repo where `npm test`, `npm run lint`, `npm run build` and the `check-dist` jo
 
 ### Completion checklist
 
-- [ ] Branch protection requires `ci` and `check-dist`
-- [ ] Implementation notes filled in
+- [x] Branch protection requires `ci` and `check-dist`
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_Progress so far (2026-11-08); full notes to be filled in after completion._
+**Summary:** The repo is wired end to end on a placeholder `main.ts`. `ci` runs typecheck, lint (ESLint + Prettier), the core-purity rule, tests with coverage and the build, and a separate `actionlint` job lints the workflows. `check-dist` rebuilds and fails on any `dist/` diff.
 
-**Done:** `ci` (typecheck, lint, core purity, tests with coverage, build, plus an `actionlint` job) and `check-dist` are green on `main` at `cd45291`. `validate:core-purity` (dependency-cruiser) runs in CI and P0-M1-04 has a test. `action.yml` validates against the SchemaStore GitHub Action schema, and the workflows against the GitHub Workflow schema; `actionlint` itself only covers workflow files.
+**Architectural decisions:** `main` is protected by a repository ruleset rather than classic branch protection: no deletion, no force pushes, changes only through pull requests (0 approvals, since this is a solo repo), and `ci`, `check-dist` and `actionlint` must pass. `actionlint` only covers workflow files, so `action.yml` was checked separately against the SchemaStore GitHub Action schema.
 
-**Remaining:** P0-M1-02 and P0-M1-03 still need their one-off throwaway-branch checks. `main` has no branch protection or ruleset yet, so `ci` and `check-dist` are not required checks.
+**Deviations:** `actionlint` is also a required check, one more than the two named in the checklist.
+
+**Tests implemented:** P0-M1-01 and P0-M1-04 as Vitest tests. P0-M1-02 and P0-M1-03 were verified once on throwaway draft PRs, closed unmerged:
+
+- P0-M1-02: [#10](https://github.com/ksycz/ai-provenance-action/pull/10) changed `src/main.ts` without rebuilding; only `check-dist` failed.
+- P0-M1-03: [#11](https://github.com/ksycz/ai-provenance-action/pull/11) added an untested file in `src/core/`; only `ci` failed, at the coverage step (72.6 % core lines against the 95 % threshold).
 
 ---
 
@@ -1034,7 +1039,7 @@ P0-M1 Scaffold
 
 | Milestone | Status | Completed |
 |---|---|---|
-| P0-M1 — Repository scaffold and CI | 🚧 In progress | — |
+| P0-M1 — Repository scaffold and CI | ✅ Completed | 2026-11-08 |
 | P1-M1 — Trailer parsing | ✅ Completed | 2026-11-07 |
 | P1-M2 — Rule matching | ✅ Completed | 2026-11-07 |
 | P1-M3 — Diff to files and lines | ✅ Completed | 2026-11-07 |
@@ -1056,7 +1061,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P1–P3 complete. P0 scaffold awaits branch protection and the P0-M1-02 / P0-M1-03 checks. Next: P4-M1.
+**Phase status:** P0–P3 complete. Next: P4-M1.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
