@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0.0",
+  "action": {
+    "name": "ai-provenance-action",
+    "version": "0.1.0",
+    "commitSha": "dddddddddddddddddddddddddddddddddddddddd"
+  },
+  "generatedAt": "2026-11-08T10:00:00.000Z",
+  "run": {
+    "repository": "ksycz/demo-shop",
+    "workflow": "ci",
+    "runId": 123456789,
+    "runAttempt": 1,
+    "event": "pull_request"
+  },
+  "pullRequest": {
+    "number": 42,
+    "url": "https://github.com/ksycz/demo-shop/pull/42",
+    "baseSha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "headSha": "cccccccccccccccccccccccccccccccccccccccc",
+    "author": "ksycz"
+  },
+  "config": {
+    "source": "base-branch",
+    "path": ".github/ai-provenance.yml",
+    "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "commits": [
+    {
+      "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "author": "ksycz",
+      "subject": "Implement cart totals.",
+      "aiTagged": true,
+      "reasons": [
+        {
+          "rule": "trailer:Co-authored-by",
+          "matched": "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+        }
+      ]
+    },
+    {
+      "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "author": "jana-n",
+      "subject": "Fix typo in README",
+      "aiTagged": false,
+      "reasons": []
+    },
+    {
+      "sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "author": "ksycz",
+      "subject": "Update checkout copy.",
+      "aiTagged": true,
+      "reasons": [
+        {
+          "rule": "trailer:Co-authored-by",
+          "matched": "Co-authored-by: GitHub Copilot <copilot@github.com>"
+        }
+      ]
+    }
+  ],
+  "aiChanges": [
+    {
+      "path": "assets/logo.png",
+      "status": "added",
+      "lines": "unknown"
+    },
+    {
+      "path": "docs/README.md",
+      "status": "renamed",
+      "previousFilename": "README.md",
+      "lines": [
+        {
+          "start": 2,
+          "end": 2
+        }
+      ]
+    },
+    {
+      "path": "src/cart.ts",
+      "status": "modified",
+      "lines": [
+        {
+          "start": 10,
+          "end": 11
+        }
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "reviewed",
+      "type": "required-label",
+      "mode": "enforce",
+      "result": "pass",
+      "message": "reviewed passed"
+    }
+  ],
+  "verdict": "pass",
+  "limitations": [
+    {
+      "code": "declarations-only",
+      "message": "AI assistance is recorded from self-declared commit trailers and pull request labels. A commit without them is not evidence of human authorship."
+    },
+    {
+      "code": "unknown-lines",
+      "message": "No diff was available for these files (binary or too large), so their changed lines are unknown.",
+      "files": [
+        "assets/logo.png"
+      ]
+    },
+    {
+      "code": "lines-as-of-commit",
+      "message": "Line ranges are the lines added by each AI-tagged commit at that commit. Later commits in the pull request may have moved or changed them."
+    }
+  ]
+}
