@@ -83,6 +83,7 @@ function fullInput(): ReportInput {
       baseSha: "e".repeat(40),
       headSha: "c".repeat(40),
       author: "ksycz",
+      isFork: false,
     },
     config: {
       source: "base-branch",

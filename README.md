@@ -2,26 +2,58 @@
 
 Reusable GitHub Action that records **declared** AI-assisted pull-request changes, evaluates policy gates from other jobs, and publishes an audit report. It produces **evidence that supports an audit**; it does not detect AI code or certify compliance.
 
-**Status:** Phases 1–4 (detection, config, policy engine, audit report and its Markdown view) are complete. Phase 5 (GitHub adapter) is in progress: The Action runs end to end: it reads the PR and the base-branch policy, evaluates the gates, writes the job summary and uploads the JSON report (P5-M1 to P5-M3). The sticky PR comment comes next (P5-M4). See also [docs/threat-model.md](./docs/threat-model.md). See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md) and [docs/report-format.md](./docs/report-format.md).
+**Status:** Phases 1–5 are complete: the Action reads the PR and the base-branch policy, evaluates the gates, writes the job summary, uploads the JSON report and keeps one sticky PR comment up to date. Next: Phase 6, running it on real pull requests. See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md), [docs/report-format.md](./docs/report-format.md) and [docs/threat-model.md](./docs/threat-model.md).
 
-## Quick start (placeholder)
+## Quick start
+
+Add a workflow that runs on pull requests. Until `v1` is released, point `uses:` at a commit SHA or at `./` inside this repository.
 
 ```yaml
-- uses: ./ # or ksycz/ai-provenance-action@v1 once released
-  with:
-    pr-comment: "true"
+name: ai-provenance
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: write # only needed for pr-comment: true
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ksycz/ai-provenance-action@v1 # not released yet
+        with:
+          pr-comment: "true"
 ```
+
+`labeled` and `pull_request_review` re-run the check when someone adds the `ai-reviewed` label or approves, because gates are evaluated when the workflow runs.
+
+## Permissions and fork pull requests
+
+| Permission             | When                                    | Why                                                        |
+| ---------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| `contents: read`       | always                                  | Read the config from the base branch and the commit diffs. |
+| `pull-requests: read`  | always (part of `pull-requests: write`) | Read the PR, its commits and reviews.                      |
+| `pull-requests: write` | only with `pr-comment: true`            | Create or update the sticky PR comment.                    |
+
+**Pull requests from forks** get a read-only `GITHUB_TOKEN`. The check still runs and still sets the verdict, writes the job summary and uploads the report artifact. Only the PR comment is skipped, with a notice explaining why.
+
+**Do not use `pull_request_target` for this Action.** It runs with a write token and secrets in the context of the base repository. Workflows that check out and run code from the fork under that trigger are a well-known way to leak secrets or tamper with the repository. This Action needs neither secrets nor write access to produce its evidence. The policy is already protected because it is read from the base branch, so plain `pull_request` is the safe choice. The price is the skipped comment on fork PRs.
 
 ## Inputs
 
-| Input             | Default                     | Purpose                                                                                     |
-| ----------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
-| `github-token`    | `${{ github.token }}`       | Token for the GitHub REST API. Needs `contents: read` and `pull-requests: read`.            |
-| `config-path`     | `.github/ai-provenance.yml` | Where the policy file lives. It is always read from the PR's base branch.                   |
-| `mutation-report` | _(empty)_                   | Path to a Stryker `mutation.json` written by an earlier step. Must be inside the workspace. |
-| `report-path`     | `ai-provenance-report.json` | Where to write the JSON report, inside the workspace.                                       |
-| `upload-artifact` | `true`                      | Upload the report as the artifact `ai-provenance-<pr>-<run_attempt>`.                       |
-| `pr-comment`      | `false`                     | Create or update a sticky PR comment. Not implemented yet (P5-M4).                          |
+| Input             | Default                     | Purpose                                                                                                  |
+| ----------------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `github-token`    | `${{ github.token }}`       | Token for the GitHub REST API. Needs `contents: read` and `pull-requests: read`.                         |
+| `config-path`     | `.github/ai-provenance.yml` | Where the policy file lives. It is always read from the PR's base branch.                                |
+| `mutation-report` | _(empty)_                   | Path to a Stryker `mutation.json` written by an earlier step. Must be inside the workspace.              |
+| `report-path`     | `ai-provenance-report.json` | Where to write the JSON report, inside the workspace.                                                    |
+| `upload-artifact` | `true`                      | Upload the report as the artifact `ai-provenance-<pr>-<run_attempt>`.                                    |
+| `pr-comment`      | `false`                     | Create or update one sticky PR comment. Needs `pull-requests: write`; skipped with a notice on fork PRs. |
 
 ## Outputs
 

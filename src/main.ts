@@ -14,11 +14,13 @@ async function main(): Promise<void> {
       mutationReport: core.getInput("mutation-report"),
       reportPath: core.getInput("report-path") || "ai-provenance-report.json",
       uploadArtifact: core.getBooleanInput("upload-artifact"),
+      prComment: core.getBooleanInput("pr-comment"),
     },
     core: {
       setOutput: (name, value) => core.setOutput(name, value),
       setFailed: (message) => core.setFailed(message),
       warning: (message) => core.warning(message),
+      notice: (message) => core.notice(message),
       info: (message) => core.info(message),
       writeSummary: async (markdown) => {
         await core.summary.addRaw(markdown).write();

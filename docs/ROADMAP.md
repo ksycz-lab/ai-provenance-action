@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P4 and P5-M1 to P5-M3 complete; the Action now runs end to end. Next: P5-M4 sticky PR comment and fork PRs.
+**Current focus:** P0–P5 complete; the Action runs end to end with its sticky PR comment. Next: P6-M1 self-test workflow and scenario PRs.
 
 ---
 
@@ -150,7 +150,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ✅ Completed | Versioned JSON report and escaped Markdown rendering |
-| 5 | GitHub adapter | 🚧 In progress | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
+| 5 | GitHub adapter | ✅ Completed | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
 | 7 | Release and Marketplace | ⏳ Planned | README, threat model, release automation, `v1` tag |
 | 8 | Integration with playwright-test-ai-inspector | ⏳ Planned | Adopt the Action, demo PR, cross-linked READMEs |
@@ -688,7 +688,7 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 # Phase 5 — GitHub adapter
 
-**Status:** 🚧 In progress · **Focus:** a thin REST layer, tested with `nock`, that feeds the pure core and publishes its outputs.
+**Status:** ✅ Completed · **Focus:** a thin REST layer, tested with `nock`, that feeds the pure core and publishes its outputs.
 
 ## P5-M1 — REST data fetching with pagination and limits
 
@@ -817,8 +817,8 @@ Wire everything in `main.ts`: set outputs, write the job summary, write the JSON
 
 ## P5-M4 — Sticky PR comment and fork PRs
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P5-M3
 
 ### Goal
@@ -839,19 +839,26 @@ Create or update one comment identified by the hidden marker, and degrade gracef
 | P5-M4-04 | 403 on comment (fork, read-only token) gives a `core.notice`, and the verdict is unchanged |
 | P5-M4-05 | Fork PR detection (`head.repo.full_name != base.repo.full_name`) is recorded in the report |
 | P5-M4-06 | No-AI PR with an existing comment updates it to the short version rather than leaving a stale failure |
+| P5-M4-07 | A no-AI PR with no existing comment gets none, and `pr-comment: false` makes no comment calls at all |
 
 ### Acceptance criteria
 
-- [ ] All P5-M4 cases pass
-- [ ] README explains why `pull_request_target` is **not** recommended, and the permissions block needed (`contents: read`, `pull-requests: write` only when `pr-comment: true`)
+- [x] All P5-M4 cases pass
+- [x] README explains why `pull_request_target` is **not** recommended, and the permissions block needed (`contents: read`, `pull-requests: write` only when `pr-comment: true`)
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `upsertComment()` in `src/adapters/pr-comment.ts` lists the PR's comments (paginated) and looks for one that starts with `<!-- ai-provenance-action -->` and was written by the token's identity. It updates that comment, or creates one. `run()` calls it when `pr-comment: true`. A 403 (fork PRs get a read-only token) becomes a `core.notice`; any other comment error becomes a warning. Neither changes the verdict, the summary or the artifact. The report gains `pullRequest.isFork`.
+
+**Architectural decisions:** The token's identity comes from `GET /user`, which works for personal tokens. The workflow `GITHUB_TOKEN` gets a 403 there and always comments as `github-actions[bot]`, so that is the fallback. A PR with no AI-tagged commits updates an existing comment to the one-line version but never creates a new one, to avoid noise on ordinary PRs.
+
+**Deviations:** Added P5-M4-07 (no new comment on no-AI PRs; no comment calls with `pr-comment: false`). The report schema gains the required field `pullRequest.isFork`, still `1.0.0` before the first release. The `run()` test harness moved to `test/helpers/action-harness.ts` and is shared by the P5-M3 and P5-M4 tests. The README Quick start is now a real workflow with a permissions block, and `docs/threat-model.md` gains entries for fake comments and fork PRs.
+
+**Tests implemented:** P5-M4-01 … P5-M4-07 in `test/P5-M4.pr-comment.test.ts`, all written before the code.
 
 ---
 
@@ -1093,7 +1100,7 @@ P0-M1 Scaffold
 | P5-M1 — REST data fetching | ✅ Completed | 2026-11-08 |
 | P5-M2 — Config from the base branch | ✅ Completed | 2026-11-08 |
 | P5-M3 — Outputs, job summary and artifact | ✅ Completed | 2026-11-08 |
-| P5-M4 — Sticky PR comment and fork PRs | ⏳ Planned | — |
+| P5-M4 — Sticky PR comment and fork PRs | ✅ Completed | 2026-11-08 |
 | P6-M1 — Self-test workflow and scenario PRs | ⏳ Planned | — |
 | P7-M1 — README and Marketplace metadata | ⏳ Planned | — |
 | P7-M2 — Threat model and security docs | ⏳ Planned | — |
@@ -1102,7 +1109,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M4.
+**Phase status:** P0–P5 complete. Next: P6-M1.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
