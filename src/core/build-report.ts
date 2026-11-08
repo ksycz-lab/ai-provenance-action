@@ -23,6 +23,7 @@ export type ReportInput = {
     baseSha: string;
     headSha: string;
     author: string | null;
+    isFork: boolean;
   };
   config: {
     source: "base-branch" | "defaults";
@@ -187,6 +188,7 @@ export function buildReport(input: ReportInput): Report {
       baseSha: pullRequest.baseSha,
       headSha: pullRequest.headSha,
       author: pullRequest.author,
+      isFork: pullRequest.isFork,
     },
     config: {
       source: config.source,

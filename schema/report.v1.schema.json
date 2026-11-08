@@ -75,7 +75,7 @@
     "pullRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["number", "url", "baseSha", "headSha", "author"],
+      "required": ["number", "url", "baseSha", "headSha", "author", "isFork"],
       "properties": {
         "number": {
           "type": "integer",
@@ -93,6 +93,10 @@
         },
         "author": {
           "type": ["string", "null"]
+        },
+        "isFork": {
+          "description": "True when the head branch lives in a fork. Fork PRs get a read-only token, so the PR comment may be skipped.",
+          "type": "boolean"
         }
       }
     },

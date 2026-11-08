@@ -15,12 +15,14 @@ import {
   type GitHubClient,
 } from "./fetch-pull-request.js";
 import { loadBaseConfig } from "./load-base-config.js";
+import { upsertComment } from "./pr-comment.js";
 
 export type ActionInputs = {
   configPath: string;
   mutationReport: string;
   reportPath: string;
   uploadArtifact: boolean;
+  prComment: boolean;
 };
 
 export type ActionDeps = {
@@ -29,6 +31,7 @@ export type ActionDeps = {
     setOutput: (name: string, value: string) => void;
     setFailed: (message: string) => void;
     warning: (message: string) => void;
+    notice: (message: string) => void;
     info: (message: string) => void;
     writeSummary: (markdown: string) => Promise<void>;
   };
@@ -160,6 +163,7 @@ async function produceReport(deps: ActionDeps): Promise<Report> {
       baseSha: data.pullRequest.baseSha,
       headSha: data.pullRequest.headSha,
       author: data.pullRequest.author,
+      isFork: data.pullRequest.isFork,
     },
     config: {
       source: base.source,
@@ -173,6 +177,37 @@ async function produceReport(deps: ActionDeps): Promise<Report> {
     policy,
     truncated: data.truncated,
   });
+}
+
+const READ_ONLY_NOTICE =
+  "Skipped the PR comment: the token cannot write to this pull request (pull requests from forks get a read-only token). The job summary and the report artifact are still available.";
+
+/**
+ * Posts or updates the sticky comment. A missing permission (fork PRs get a read-only
+ * token) only degrades the output channel: a notice, never a change to the verdict.
+ * A PR with no AI-tagged commits updates an existing comment but does not add one.
+ */
+async function postComment(deps: ActionDeps, report: Report): Promise<void> {
+  const ref = { ...deps.context.repo, number: report.pullRequest.number };
+  try {
+    await upsertComment(
+      deps.client,
+      ref,
+      renderMarkdown(report, { variant: "comment" }),
+      {
+        createIfMissing: report.commits.some((c) => c.aiTagged),
+        sleep: deps.sleep,
+      },
+    );
+  } catch (error) {
+    if ((error as { status?: number })?.status === 403) {
+      deps.core.notice(READ_ONLY_NOTICE);
+    } else {
+      deps.core.warning(
+        `Could not post the PR comment: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 }
 
 /**
@@ -214,6 +249,9 @@ export async function run(deps: ActionDeps): Promise<void> {
     if (inputs.uploadArtifact) {
       const name = `ai-provenance-${report.pullRequest.number}-${report.run.runAttempt}`;
       await deps.uploadArtifact(name, [reportFile!], await realpath(workspace));
+    }
+    if (inputs.prComment) {
+      await postComment(deps, report);
     }
   } catch (error) {
     core.setFailed(error instanceof Error ? error.message : String(error));

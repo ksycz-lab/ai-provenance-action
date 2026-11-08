@@ -52,13 +52,14 @@ The same input always produces byte-identical JSON: keys are written in a fixed 
 
 ## `pullRequest`
 
-| Field     | Meaning                                                       |
-| --------- | ------------------------------------------------------------- |
-| `number`  | PR number.                                                    |
-| `url`     | PR URL on GitHub.                                             |
-| `baseSha` | Base commit the PR was compared against and config read from. |
-| `headSha` | Head commit that was analysed.                                |
-| `author`  | PR author's login, or `null` for a deleted account.           |
+| Field     | Meaning                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------- |
+| `number`  | PR number.                                                                                                     |
+| `url`     | PR URL on GitHub.                                                                                              |
+| `baseSha` | Base commit the PR was compared against and config read from.                                                  |
+| `headSha` | Head commit that was analysed.                                                                                 |
+| `author`  | PR author's login, or `null` for a deleted account.                                                            |
+| `isFork`  | `true` when the head branch lives in a fork. Fork PRs get a read-only token, so the PR comment may be skipped. |
 
 ## `config`
 

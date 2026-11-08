@@ -226609,6 +226609,7 @@ function buildReport(input) {
             baseSha: pullRequest.baseSha,
             headSha: pullRequest.headSha,
             author: pullRequest.author,
+            isFork: pullRequest.isFork,
         },
         config: {
             source: config.source,
@@ -227054,6 +227055,7 @@ const mutationScoreGate = {
     },
 };
 
+const COMMENT_MARKER = "<!-- ai-provenance-action -->";
 /** Leave headroom under GitHub's limit for anything the adapter appends. */
 const LENGTH_BUDGET = 60_000;
 const DEFAULT_LIST_CAP = 50;
@@ -227228,7 +227230,7 @@ function renderBody(report, cap) {
  * comment (very long paths), the cap shrinks until it fits, down to no lists at all.
  */
 function renderMarkdown(report, options) {
-    const prefix = "";
+    const prefix = options.variant === "comment" ? `${COMMENT_MARKER}\n` : "";
     let cap = DEFAULT_LIST_CAP;
     let markdown = prefix + renderBody(report, cap);
     while (markdown.length > LENGTH_BUDGET && cap > 0) {
@@ -239625,6 +239627,52 @@ async function loadBaseConfig(client, repo, shas, path, options = {}) {
     };
 }
 
+/** Who comments when the token is the workflow's own GITHUB_TOKEN. */
+const ACTIONS_BOT_LOGIN = "github-actions[bot]";
+/**
+ * The login that owns the token. A personal access token can read it from GET /user;
+ * the workflow's GITHUB_TOKEN cannot (403) and always comments as github-actions[bot].
+ */
+async function tokenLogin(client, sleep) {
+    try {
+        const { data } = await withRetry(() => client.rest.users.getAuthenticated(), sleep);
+        return data.login;
+    }
+    catch (error) {
+        const status = error?.status;
+        if (status === 401 || status === 403 || status === 404) {
+            return ACTIONS_BOT_LOGIN;
+        }
+        throw error;
+    }
+}
+/**
+ * Creates or updates the one sticky comment on the PR. A comment is ours only when it
+ * starts with the hidden marker AND was written by the token's own identity, so a
+ * comment someone else wrote with the marker text is never edited.
+ */
+async function upsertComment(client, ref, body, options) {
+    const sleep = options.sleep ?? realSleep;
+    const { owner, repo, number } = ref;
+    const login = await tokenLogin(client, sleep);
+    const comments = await withRetry(() => client.paginate(client.rest.issues.listComments, {
+        owner,
+        repo,
+        issue_number: number,
+        per_page: 100,
+    }), sleep);
+    const ours = comments.find((c) => c.user?.login === login && (c.body ?? "").startsWith(COMMENT_MARKER));
+    if (ours !== undefined) {
+        await withRetry(() => client.rest.issues.updateComment({ owner, repo, comment_id: ours.id, body }), sleep);
+        return "updated";
+    }
+    if (!options.createIfMissing) {
+        return "skipped";
+    }
+    await withRetry(() => client.rest.issues.createComment({ owner, repo, issue_number: number, body }), sleep);
+    return "created";
+}
+
 const GATES = [mutationScoreGate, requiredLabelGate, approvalsGate];
 function isInside(root, path) {
     const rel = node_path.relative(root, path);
@@ -239716,6 +239764,7 @@ async function produceReport(deps) {
             baseSha: data.pullRequest.baseSha,
             headSha: data.pullRequest.headSha,
             author: data.pullRequest.author,
+            isFork: data.pullRequest.isFork,
         },
         config: {
             source: base.source,
@@ -239729,6 +239778,29 @@ async function produceReport(deps) {
         policy,
         truncated: data.truncated,
     });
+}
+const READ_ONLY_NOTICE = "Skipped the PR comment: the token cannot write to this pull request (pull requests from forks get a read-only token). The job summary and the report artifact are still available.";
+/**
+ * Posts or updates the sticky comment. A missing permission (fork PRs get a read-only
+ * token) only degrades the output channel: a notice, never a change to the verdict.
+ * A PR with no AI-tagged commits updates an existing comment but does not add one.
+ */
+async function postComment(deps, report) {
+    const ref = { ...deps.context.repo, number: report.pullRequest.number };
+    try {
+        await upsertComment(deps.client, ref, renderMarkdown(report, { variant: "comment" }), {
+            createIfMissing: report.commits.some((c) => c.aiTagged),
+            sleep: deps.sleep,
+        });
+    }
+    catch (error) {
+        if (error?.status === 403) {
+            deps.core.notice(READ_ONLY_NOTICE);
+        }
+        else {
+            deps.core.warning(`Could not post the PR comment: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
 }
 /**
  * The whole Action: read the PR and the base-branch policy, build the report, then
@@ -239760,6 +239832,9 @@ async function run(deps) {
             const name = `ai-provenance-${report.pullRequest.number}-${report.run.runAttempt}`;
             await deps.uploadArtifact(name, [reportFile], await promises$1.realpath(workspace));
         }
+        if (inputs.prComment) {
+            await postComment(deps, report);
+        }
     }
     catch (error) {
         core.setFailed(error instanceof Error ? error.message : String(error));
@@ -239782,11 +239857,13 @@ async function main() {
             mutationReport: coreExports.getInput("mutation-report"),
             reportPath: coreExports.getInput("report-path") || "ai-provenance-report.json",
             uploadArtifact: coreExports.getBooleanInput("upload-artifact"),
+            prComment: coreExports.getBooleanInput("pr-comment"),
         },
         core: {
             setOutput: (name, value) => coreExports.setOutput(name, value),
             setFailed: (message) => coreExports.setFailed(message),
             warning: (message) => coreExports.warning(message),
+            notice: (message) => coreExports.notice(message),
             info: (message) => coreExports.info(message),
             writeSummary: async (markdown) => {
                 await coreExports.summary.addRaw(markdown).write();

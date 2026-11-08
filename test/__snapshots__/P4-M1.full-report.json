@@ -18,7 +18,8 @@
     "url": "https://github.com/ksycz/demo-shop/pull/42",
     "baseSha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
     "headSha": "cccccccccccccccccccccccccccccccccccccccc",
-    "author": "ksycz"
+    "author": "ksycz",
+    "isFork": false
   },
   "config": {
     "source": "base-branch",
