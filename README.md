@@ -2,7 +2,7 @@
 
 Reusable GitHub Action that records **declared** AI-assisted pull-request changes, evaluates policy gates from other jobs, and publishes an audit report. It produces **evidence that supports an audit**; it does not detect AI code or certify compliance.
 
-**Status:** Phases 1–4 (detection, config, policy engine, audit report and its Markdown view) are complete. Phase 5 (GitHub adapter) is in progress: PR data is fetched over REST (P5-M1) and the policy is read from the base branch (P5-M2), but `main.ts` is not wired yet. See also [docs/threat-model.md](./docs/threat-model.md). See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md) and [docs/report-format.md](./docs/report-format.md).
+**Status:** Phases 1–4 (detection, config, policy engine, audit report and its Markdown view) are complete. Phase 5 (GitHub adapter) is in progress: The Action runs end to end: it reads the PR and the base-branch policy, evaluates the gates, writes the job summary and uploads the JSON report (P5-M1 to P5-M3). The sticky PR comment comes next (P5-M4). See also [docs/threat-model.md](./docs/threat-model.md). See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md) and [docs/report-format.md](./docs/report-format.md).
 
 ## Quick start (placeholder)
 
@@ -11,6 +11,26 @@ Reusable GitHub Action that records **declared** AI-assisted pull-request change
   with:
     pr-comment: "true"
 ```
+
+## Inputs
+
+| Input             | Default                     | Purpose                                                                                     |
+| ----------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| `github-token`    | `${{ github.token }}`       | Token for the GitHub REST API. Needs `contents: read` and `pull-requests: read`.            |
+| `config-path`     | `.github/ai-provenance.yml` | Where the policy file lives. It is always read from the PR's base branch.                   |
+| `mutation-report` | _(empty)_                   | Path to a Stryker `mutation.json` written by an earlier step. Must be inside the workspace. |
+| `report-path`     | `ai-provenance-report.json` | Where to write the JSON report, inside the workspace.                                       |
+| `upload-artifact` | `true`                      | Upload the report as the artifact `ai-provenance-<pr>-<run_attempt>`.                       |
+| `pr-comment`      | `false`                     | Create or update a sticky PR comment. Not implemented yet (P5-M4).                          |
+
+## Outputs
+
+| Output        | Example                     | Purpose                                                                        |
+| ------------- | --------------------------- | ------------------------------------------------------------------------------ |
+| `ai_tagged`   | `true`                      | Whether any commit or PR label was declared AI-assisted.                       |
+| `ai_files`    | `["src/a.ts"]`              | JSON array of files touched by AI-tagged commits.                              |
+| `report_path` | `ai-provenance-report.json` | Path of the written JSON report.                                               |
+| `verdict`     | `pass`                      | Overall policy result: `pass`, `warn` or `fail`. A `fail` also fails the step. |
 
 ## Development
 

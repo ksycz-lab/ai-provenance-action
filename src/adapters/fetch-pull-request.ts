@@ -35,6 +35,44 @@ export type PullRequestData = {
 
 export type FetchOptions = { sleep?: (ms: number) => Promise<void> };
 
+/** GET /pulls/{n}, reduced to what the rest of the Action needs. */
+export type PullRequestSummary = {
+  pullRequest: PullRequestData["pullRequest"];
+  labels: string[];
+  /** The PR's own commit count; the commits list endpoint stops at 250. */
+  totalCommits: number;
+};
+
+/** Reads the PR itself (one call): SHAs, author, labels, commit count. */
+export async function fetchPullRequest(
+  client: GitHubClient,
+  ref: PullRequestRef,
+  options: FetchOptions = {},
+): Promise<PullRequestSummary> {
+  const sleep = options.sleep ?? realSleep;
+  const { data: pr } = await withRetry(
+    () =>
+      client.rest.pulls.get({
+        owner: ref.owner,
+        repo: ref.repo,
+        pull_number: ref.number,
+      }),
+    sleep,
+  );
+  return {
+    pullRequest: {
+      number: pr.number,
+      url: pr.html_url,
+      baseSha: pr.base.sha,
+      headSha: pr.head.sha,
+      author: pr.user?.login ?? null,
+      isFork: pr.head.repo?.full_name !== pr.base.repo.full_name,
+    },
+    labels: pr.labels.map((label) => label.name),
+    totalCommits: pr.commits,
+  };
+}
+
 /** Owner, repo and PR number from the workflow event; anything but a PR event fails fast. */
 export function pullRequestRef(context: EventContext): PullRequestRef {
   const number = context.payload.pull_request?.number;
@@ -127,16 +165,14 @@ export async function gatherPullRequestData(
   client: GitHubClient,
   ref: PullRequestRef,
   config: Config,
-  options: FetchOptions = {},
+  options: FetchOptions & { prefetched?: PullRequestSummary } = {},
 ): Promise<PullRequestData> {
   const sleep = options.sleep ?? realSleep;
   const { owner, repo, number } = ref;
 
-  const { data: pr } = await withRetry(
-    () => client.rest.pulls.get({ owner, repo, pull_number: number }),
-    sleep,
-  );
-  const labels = pr.labels.map((label) => label.name);
+  const summary =
+    options.prefetched ?? (await fetchPullRequest(client, ref, { sleep }));
+  const { labels } = summary;
 
   const listed = await withRetry(
     () =>
@@ -153,7 +189,7 @@ export async function gatherPullRequestData(
     author: c.author?.login ?? c.commit.author?.name ?? null,
     message: c.commit.message,
   }));
-  const truncatedCommits = pr.commits > commits.length;
+  const truncatedCommits = summary.totalCommits > commits.length;
 
   const classification = classifyCommits(commits, labels, config.detection);
   const taggedShas = classification.commits.filter((c) => c.aiTagged).map((c) => c.sha);
@@ -189,14 +225,7 @@ export async function gatherPullRequestData(
   }
 
   return {
-    pullRequest: {
-      number: pr.number,
-      url: pr.html_url,
-      baseSha: pr.base.sha,
-      headSha: pr.head.sha,
-      author: pr.user?.login ?? null,
-      isFork: pr.head.repo?.full_name !== pr.base.repo.full_name,
-    },
+    pullRequest: summary.pullRequest,
     labels,
     commits,
     classification,

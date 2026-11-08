@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P4, P5-M1 and P5-M2 complete. Next: P5-M3 outputs, job summary and artifact.
+**Current focus:** P0–P4 and P5-M1 to P5-M3 complete; the Action now runs end to end. Next: P5-M4 sticky PR comment and fork PRs.
 
 ---
 
@@ -775,8 +775,8 @@ Read the config with `GET /contents/{path}?ref={base.sha}`, so the PR under revi
 
 ## P5-M3 — Outputs, job summary and artifact
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P4-M2, P5-M2, P3-M2, P3-M3
 
 ### Goal
@@ -793,19 +793,27 @@ Wire everything in `main.ts`: set outputs, write the job summary, write the JSON
 | P5-M3-04 | The artifact is named `ai-provenance-<pr>-<run_attempt>` so re-runs do not collide |
 | P5-M3-05 | `upload-artifact: false` writes the file but skips the upload |
 | P5-M3-06 | A `mutation-report` path outside the workspace is rejected (path traversal guard) |
+| P5-M3-07 | `action.yml` inputs and outputs match the README tables (the acceptance criterion as a test) |
+| P5-M3-08 | A `mutation-report` inside the workspace is read and the mutation gate scores the AI-touched files |
 
 ### Acceptance criteria
 
-- [ ] All P5-M3 cases pass
-- [ ] `action.yml` inputs and outputs match the README table (checked by a test)
+- [x] All P5-M3 cases pass
+- [x] `action.yml` inputs and outputs match the README table (checked by a test)
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `run(deps)` in `src/adapters/run.ts` is the whole Action. It reads the PR (`fetchPullRequest`), loads the policy from the base commit, gathers commits, files and reviews with that policy's detection rules, reads the mutation report, evaluates the gates and builds the report. Then it writes the report file, sets the four outputs, writes the job summary and uploads the artifact `ai-provenance-<pr>-<run_attempt>`. A `fail` verdict calls `setFailed`; `warn` emits a warning and the step passes. `src/main.ts` only builds the real dependencies (`@actions/core`, `getOctokit`, `DefaultArtifactClient`, the GitHub context) and calls `run`.
+
+**Architectural decisions:** Everything `run` touches comes in through `ActionDeps`, so tests drive the real adapters with `nock` and real files in a temporary workspace, with small recording fakes only for `core` and the upload. Any error before a report exists still writes a one-line ❌ summary, then fails the step. User paths (`mutation-report`, `report-path`) are resolved against the workspace and refused when they leave it, including through `..`, absolute paths and symlinks (checked with `realpath`). `fetchPullRequest` was split out of `gatherPullRequestData`: the PR's base and head SHAs are needed to load the config before commits are classified, and the PR is passed on (`prefetched`), so it is fetched only once.
+
+**Deviations:** The README had no inputs and outputs tables yet, so they were added here and checked against `action.yml` (P5-M3-07). P5-M3-08 was written after the code; breaking the file read, or not passing the report to the gates, both made it fail. Rollup needed `@rollup/plugin-json` (the schemas are imported as JSON) and `inlineDynamicImports`. The bundle grew from 1.1 MB to 6.6 MB, mostly the Azure storage SDK behind `@actions/artifact`. The optional `kerberos` module stays external: it is loaded lazily, only for Negotiate proxy authentication. The built `dist/index.js` was smoke-run with a fake runner environment: on a `push` event it fails cleanly and writes the summary.
+
+**Tests implemented:** P5-M3-01 … P5-M3-08 in `test/P5-M3.run.test.ts`.
 
 ## P5-M4 — Sticky PR comment and fork PRs
 
@@ -1084,7 +1092,7 @@ P0-M1 Scaffold
 | P4-M2 — Markdown rendering and escaping | ✅ Completed | 2026-11-08 |
 | P5-M1 — REST data fetching | ✅ Completed | 2026-11-08 |
 | P5-M2 — Config from the base branch | ✅ Completed | 2026-11-08 |
-| P5-M3 — Outputs, job summary and artifact | ⏳ Planned | — |
+| P5-M3 — Outputs, job summary and artifact | ✅ Completed | 2026-11-08 |
 | P5-M4 — Sticky PR comment and fork PRs | ⏳ Planned | — |
 | P6-M1 — Self-test workflow and scenario PRs | ⏳ Planned | — |
 | P7-M1 — README and Marketplace metadata | ⏳ Planned | — |
@@ -1094,7 +1102,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M3.
+**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M4.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
