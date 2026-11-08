@@ -1,32 +1,47 @@
+import { DefaultArtifactClient } from "@actions/artifact";
 import * as core from "@actions/core";
-import { info } from "./adapters/github-context.js";
-import { ACTION_NAME, actionVersion } from "./core/version.js";
+import * as github from "@actions/github";
+import type { EventContext } from "./adapters/fetch-pull-request.js";
+import { run } from "./adapters/run.js";
+import { actionVersion } from "./core/version.js";
 
-async function run(): Promise<void> {
-  info(
-    `${ACTION_NAME} v${actionVersion(process.env.ACTION_VERSION)} (scaffold — detection core not wired yet)`,
-  );
-
-  core.setOutput("ai_tagged", "false");
-  core.setOutput("ai_files", "[]");
-  core.setOutput(
-    "report_path",
-    core.getInput("report-path") || "ai-provenance-report.json",
-  );
-  core.setOutput("verdict", "pass");
-
-  await core.summary
-    .addHeading("AI Provenance Audit")
-    .addRaw(
-      "Scaffold run: produces evidence that supports an audit once detection and policy are implemented.",
-    )
-    .write();
+/** Entry point: build the real dependencies from the runner and hand them to run(). */
+async function main(): Promise<void> {
+  const context = github.context;
+  await run({
+    inputs: {
+      configPath: core.getInput("config-path") || ".github/ai-provenance.yml",
+      mutationReport: core.getInput("mutation-report"),
+      reportPath: core.getInput("report-path") || "ai-provenance-report.json",
+      uploadArtifact: core.getBooleanInput("upload-artifact"),
+    },
+    core: {
+      setOutput: (name, value) => core.setOutput(name, value),
+      setFailed: (message) => core.setFailed(message),
+      warning: (message) => core.warning(message),
+      info: (message) => core.info(message),
+      writeSummary: async (markdown) => {
+        await core.summary.addRaw(markdown).write();
+      },
+    },
+    uploadArtifact: async (name, files, rootDirectory) => {
+      await new DefaultArtifactClient().uploadArtifact(name, files, rootDirectory);
+    },
+    client: github.getOctokit(core.getInput("github-token", { required: true })),
+    context: {
+      eventName: context.eventName,
+      repo: context.repo,
+      payload: context.payload as EventContext["payload"],
+      workflow: context.workflow,
+      runId: context.runId,
+      runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT) || 1,
+    },
+    workspace: process.env.GITHUB_WORKSPACE ?? process.cwd(),
+    actionVersion: actionVersion(process.env.ACTION_VERSION),
+    now: () => new Date(),
+  });
 }
 
-run().catch((error: unknown) => {
-  if (error instanceof Error) {
-    core.setFailed(error.message);
-  } else {
-    core.setFailed(String(error));
-  }
+main().catch((error: unknown) => {
+  core.setFailed(error instanceof Error ? error.message : String(error));
 });
