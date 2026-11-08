@@ -1,0 +1,11 @@
+# Warn-mode copy of the policy for this repository's own pull requests (P6-M1-04).
+# Same gate as ai-provenance.yml, but a failing gate gives a warning instead of failing.
+version: 1
+policy:
+  mode: warn
+  gates:
+    - id: mutation
+      type: mutation-score
+      threshold: 80
+      scope: ai-files
+      on-missing: skip

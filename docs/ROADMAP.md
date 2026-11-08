@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P5 complete; the Action runs end to end with its sticky PR comment. Next: P6-M1 self-test workflow and scenario PRs.
+**Current focus:** P0–P5 complete; the Action runs end to end with its sticky PR comment. Now: P6-M1 self-test workflow and scenario PRs (workflow in place, scenario PRs next).
 
 ---
 
@@ -151,7 +151,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ✅ Completed | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ✅ Completed | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
-| 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
+| 6 | End-to-end and dogfooding | 🚧 In progress | Self-test workflows running the bundled Action on real PRs |
 | 7 | Release and Marketplace | ⏳ Planned | README, threat model, release automation, `v1` tag |
 | 8 | Integration with playwright-test-ai-inspector | ⏳ Planned | Adopt the Action, demo PR, cross-linked READMEs |
 
@@ -864,11 +864,11 @@ Create or update one comment identified by the hidden marker, and degrade gracef
 
 # Phase 6 — End-to-end and dogfooding
 
-**Status:** ⏳ Planned · **Focus:** prove the bundled `dist/` works on real GitHub, not only under mocks.
+**Status:** 🚧 In progress · **Focus:** prove the bundled `dist/` works on real GitHub, not only under mocks.
 
 ## P6-M1 — Self-test workflow and scenario PRs
 
-**Status:** ⏳ Planned
+**Status:** 🚧 In progress
 **Completed:** —
 **Dependencies:** P5-M4
 
@@ -1101,7 +1101,7 @@ P0-M1 Scaffold
 | P5-M2 — Config from the base branch | ✅ Completed | 2026-11-08 |
 | P5-M3 — Outputs, job summary and artifact | ✅ Completed | 2026-11-08 |
 | P5-M4 — Sticky PR comment and fork PRs | ✅ Completed | 2026-11-08 |
-| P6-M1 — Self-test workflow and scenario PRs | ⏳ Planned | — |
+| P6-M1 — Self-test workflow and scenario PRs | 🚧 In progress | — |
 | P7-M1 — README and Marketplace metadata | ⏳ Planned | — |
 | P7-M2 — Threat model and security docs | ⏳ Planned | — |
 | P7-M3 — Release automation | ⏳ Planned | — |
