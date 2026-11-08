@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P3 complete. Next: P4-M1 JSON report.
+**Current focus:** P1–P3 complete. Next: P4-M1 JSON report. P0-M1 still needs branch protection and two one-off CI checks (P0-M1-02, P0-M1-03).
 
 ---
 
@@ -145,8 +145,9 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 
 | Phase | Name | Status | Focus |
 |---|---|---|---|
-| 1 | Detection core | 🚧 In progress | Pure trailer parsing, rule matching and diff-to-lines mapping |
-| 2 | Configuration | 🚧 In progress | YAML config schema, defaults, validation errors |
+| 0 | Scaffold | 🚧 In progress | Wired repo, CI, check-dist and core-purity rule |
+| 1 | Detection core | ✅ Completed | Pure trailer parsing, rule matching and diff-to-lines mapping |
+| 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
@@ -160,11 +161,11 @@ The phases run from easiest to hardest: Phases 1-4 are pure functions with fixtu
 
 # Phase 0 — Scaffold
 
-**Status:** ⏳ Planned · **Focus:** an empty but fully wired repo, so every later milestone starts red-green straight away.
+**Status:** 🚧 In progress · **Focus:** an empty but fully wired repo, so every later milestone starts red-green straight away.
 
 ## P0-M1 — Repository scaffold and CI
 
-**Status:** ⏳ Planned
+**Status:** 🚧 In progress
 **Completed:** —
 **Dependencies:** none
 
@@ -191,9 +192,9 @@ A repo where `npm test`, `npm run lint`, `npm run build` and the `check-dist` jo
 
 ### Acceptance criteria
 
-- [ ] All four CI checks are green on `main`
-- [ ] Core purity is enforced by tooling (P0-M1-04), not just by convention
-- [ ] `action.yml` passes `actionlint` / schema validation
+- [x] All four CI checks are green on `main`
+- [x] Core purity is enforced by tooling (P0-M1-04), not just by convention
+- [x] `action.yml` passes `actionlint` / schema validation
 
 ### Completion checklist
 
@@ -202,13 +203,17 @@ A repo where `npm test`, `npm run lint`, `npm run build` and the `check-dist` jo
 
 ### Implementation notes
 
-_To be filled in after completion._
+_Progress so far (2026-11-08); full notes to be filled in after completion._
+
+**Done:** `ci` (typecheck, lint, core purity, tests with coverage, build, plus an `actionlint` job) and `check-dist` are green on `main` at `cd45291`. `validate:core-purity` (dependency-cruiser) runs in CI and P0-M1-04 has a test. `action.yml` validates against the SchemaStore GitHub Action schema, and the workflows against the GitHub Workflow schema; `actionlint` itself only covers workflow files.
+
+**Remaining:** P0-M1-02 and P0-M1-03 still need their one-off throwaway-branch checks. `main` has no branch protection or ruleset yet, so `ci` and `check-dist` are not required checks.
 
 ---
 
 # Phase 1 — Detection core
 
-**Status:** 🚧 In progress · **Focus:** pure functions that turn commits, labels and diffs into "what was AI-assisted, and why".
+**Status:** ✅ Completed · **Focus:** pure functions that turn commits, labels and diffs into "what was AI-assisted, and why".
 
 ## P1-M1 — Trailer parsing
 
@@ -374,7 +379,7 @@ _To be filled in after completion._
 
 # Phase 2 — Configuration
 
-**Status:** 🚧 In progress · **Focus:** a small, strictly validated YAML config with helpful errors.
+**Status:** ✅ Completed · **Focus:** a small, strictly validated YAML config with helpful errors.
 
 ## P2-M1 — Config schema, defaults and validation
 
@@ -1051,7 +1056,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0 scaffold underway.
+**Phase status:** P1–P3 complete. P0 scaffold awaits branch protection and the P0-M1-02 / P0-M1-03 checks. Next: P4-M1.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
