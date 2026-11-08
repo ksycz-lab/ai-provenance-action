@@ -88,6 +88,7 @@ function fullInput(): ReportInput {
       source: "base-branch",
       path: ".github/ai-provenance.yml",
       sha256: "f".repeat(64),
+      changedInPr: false,
     },
     commits,
     classification,
@@ -102,7 +103,12 @@ function noAiInput(): ReportInput {
   const commits = [base.commits[1]!];
   return {
     ...base,
-    config: { source: "defaults", path: ".github/ai-provenance.yml", sha256: null },
+    config: {
+      source: "defaults",
+      path: ".github/ai-provenance.yml",
+      sha256: null,
+      changedInPr: false,
+    },
     commits,
     classification: classifyCommits(commits, [], DEFAULT_DETECTION_RULES),
     aiChanges: [],
@@ -144,6 +150,7 @@ describe("P4-M1 JSON report and schema", () => {
       source: "defaults",
       path: ".github/ai-provenance.yml",
       sha256: null,
+      changedInPr: false,
     });
   });
 
@@ -174,6 +181,7 @@ describe("P4-M1 JSON report and schema", () => {
         sha256: shuffled.config.sha256,
         path: shuffled.config.path,
         source: shuffled.config.source,
+        changedInPr: shuffled.config.changedInPr,
       },
       pullRequest: shuffled.pullRequest,
       run: shuffled.run,

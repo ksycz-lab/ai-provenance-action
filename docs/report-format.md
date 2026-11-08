@@ -62,11 +62,12 @@ The same input always produces byte-identical JSON: keys are written in a fixed 
 
 ## `config`
 
-| Field    | Meaning                                                                                           |
-| -------- | ------------------------------------------------------------------------------------------------- |
-| `source` | `base-branch` when the config file was read from the base SHA, `defaults` when it was absent.     |
-| `path`   | Config path that was looked up, for example `.github/ai-provenance.yml`.                          |
-| `sha256` | SHA-256 of the config file bytes, so an auditor can match the exact policy. `null` with defaults. |
+| Field         | Meaning                                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source`      | `base-branch` when the config file was read from the base SHA, `defaults` when it was absent.                                                      |
+| `path`        | Config path that was looked up, for example `.github/ai-provenance.yml`.                                                                           |
+| `sha256`      | SHA-256 of the config file bytes, so an auditor can match the exact policy. `null` with defaults.                                                  |
+| `changedInPr` | `true` when the PR adds, edits or deletes the config file. The PR is still judged by the base-branch version; this flag makes the attempt visible. |
 
 ## `commits[]`
 

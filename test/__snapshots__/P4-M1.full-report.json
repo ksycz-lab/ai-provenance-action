@@ -23,7 +23,8 @@
   "config": {
     "source": "base-branch",
     "path": ".github/ai-provenance.yml",
-    "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "changedInPr": false
   },
   "commits": [
     {

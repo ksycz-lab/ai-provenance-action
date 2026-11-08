@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P4 and P5-M1 complete. Next: P5-M2 config from the base branch.
+**Current focus:** P0–P4, P5-M1 and P5-M2 complete. Next: P5-M3 outputs, job summary and artifact.
 
 ---
 
@@ -735,8 +735,8 @@ Fetch everything the core needs with REST only: PR metadata and labels, PR commi
 
 ## P5-M2 — Config from the base branch
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P2-M1, P5-M1
 
 ### Goal
@@ -751,19 +751,27 @@ Read the config with `GET /contents/{path}?ref={base.sha}`, so the PR under revi
 | P5-M2-02 | 404 gives defaults and `config.source: defaults` |
 | P5-M2-03 | A PR that edits `.github/ai-provenance.yml` is still judged by the base version, and the report notes `configChangedInPr: true` |
 | P5-M2-04 | Invalid config fails the job with the P2-M1 error messages |
+| P5-M2-05 | `config.sha256` is the SHA-256 of the base file's bytes |
+| P5-M2-06 | The PR comment says when the PR changes the config file |
 
 ### Acceptance criteria
 
-- [ ] All P5-M2 cases pass
-- [ ] Threat model entry written for "PR weakens its own policy"
+- [x] All P5-M2 cases pass
+- [x] Threat model entry written for "PR weakens its own policy" ([docs/threat-model.md](./threat-model.md))
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `loadBaseConfig(client, repo, { baseSha, headSha }, path)` in `src/adapters/load-base-config.ts` reads the config with `GET /contents/{path}?ref=<base sha>`, validates it with `loadConfig()` (P2-M1), and returns the config, its source (`base-branch` or `defaults`), the SHA-256 of the file bytes and `changedInPr`. A missing file gives the defaults; an invalid file throws one error listing every problem with its YAML path and suggestion.
+
+**Architectural decisions:** To set `changedInPr` without ever reading the head version, the adapter walks Git trees at the head commit (`GET /git/trees/{sha}`, one call per path segment, 2 for the default path) and compares the config's blob SHA with the base file's. Only tree metadata is fetched, so the PR's version can never be parsed or used by mistake. The retry helper moved to `src/adapters/retry.ts` so both adapters share it.
+
+**Deviations:** The report field is `config.changedInPr`, inside the existing `config` block, rather than a top-level `configChangedInPr`. The report schema is still `1.0.0`, because nothing has been released yet. Added P5-M2-05 (hash of the exact bytes) and P5-M2-06 (the PR comment shows an ℹ️ note when the PR changes the config), both written test-first. `docs/threat-model.md` is started here with this one entry; P7-M2 completes it.
+
+**Tests implemented:** P5-M2-01 … P5-M2-06 in `test/P5-M2.load-base-config.test.ts`, with `nock` and no network.
 
 ## P5-M3 — Outputs, job summary and artifact
 
@@ -1075,7 +1083,7 @@ P0-M1 Scaffold
 | P4-M1 — JSON report and schema | ✅ Completed | 2026-11-08 |
 | P4-M2 — Markdown rendering and escaping | ✅ Completed | 2026-11-08 |
 | P5-M1 — REST data fetching | ✅ Completed | 2026-11-08 |
-| P5-M2 — Config from the base branch | ⏳ Planned | — |
+| P5-M2 — Config from the base branch | ✅ Completed | 2026-11-08 |
 | P5-M3 — Outputs, job summary and artifact | ⏳ Planned | — |
 | P5-M4 — Sticky PR comment and fork PRs | ⏳ Planned | — |
 | P6-M1 — Self-test workflow and scenario PRs | ⏳ Planned | — |
@@ -1086,7 +1094,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M2.
+**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M3.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration

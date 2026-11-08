@@ -3,6 +3,7 @@ import { classifyCommits, type Classification } from "../core/classify-commits.j
 import type { ReviewInput } from "../core/evaluate-policy.js";
 import type { Config } from "../core/load-config.js";
 import type { CommitFile } from "../core/map-changes.js";
+import { realSleep, withRetry } from "./retry.js";
 
 export type GitHubClient = ReturnType<typeof getOctokit>;
 
@@ -34,11 +35,6 @@ export type PullRequestData = {
 
 export type FetchOptions = { sleep?: (ms: number) => Promise<void> };
 
-const DEFAULT_RETRY_AFTER_SECONDS = 60;
-
-const realSleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 /** Owner, repo and PR number from the workflow event; anything but a PR event fails fast. */
 export function pullRequestRef(context: EventContext): PullRequestRef {
   const number = context.payload.pull_request?.number;
@@ -48,55 +44,6 @@ export function pullRequestRef(context: EventContext): PullRequestRef {
     );
   }
   return { owner: context.repo.owner, repo: context.repo.repo, number };
-}
-
-type HttpError = {
-  status?: number;
-  message?: string;
-  response?: { headers?: Record<string, string | number | undefined> };
-};
-
-function secondaryRateLimitWait(error: unknown): number | undefined {
-  const e = error as HttpError;
-  if (e?.status !== 403 && e?.status !== 429) {
-    return undefined;
-  }
-  const header = e.response?.headers?.["retry-after"];
-  const limited = header !== undefined || /secondary rate limit/i.test(e.message ?? "");
-  if (!limited) {
-    return undefined;
-  }
-  const seconds = Number(header);
-  return (
-    (Number.isFinite(seconds) && seconds >= 0 ? seconds : DEFAULT_RETRY_AFTER_SECONDS) *
-    1000
-  );
-}
-
-/** Runs one API step; on a secondary rate limit waits `retry-after` and retries once. */
-async function withRetry<T>(
-  step: () => Promise<T>,
-  sleep: (ms: number) => Promise<void>,
-): Promise<T> {
-  try {
-    return await step();
-  } catch (error) {
-    const waitMs = secondaryRateLimitWait(error);
-    if (waitMs === undefined) {
-      throw error;
-    }
-    await sleep(waitMs);
-    try {
-      return await step();
-    } catch (again) {
-      if (secondaryRateLimitWait(again) !== undefined) {
-        throw new Error(
-          `GitHub API secondary rate limit: still limited after waiting ${waitMs / 1000}s and retried once. Re-run the job later.`,
-        );
-      }
-      throw again;
-    }
-  }
 }
 
 function nextLink(headers: Record<string, unknown>): string | undefined {
