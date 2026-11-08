@@ -2,7 +2,7 @@
 
 Reusable GitHub Action that records **declared** AI-assisted pull-request changes, evaluates policy gates from other jobs, and publishes an audit report. It produces **evidence that supports an audit**; it does not detect AI code or certify compliance.
 
-**Status:** Phases 1–3 (detection, config, policy engine) and the JSON report (P4-M1) are complete, but the Action is not wired end to end yet. Next: P4-M2 (Markdown rendering). See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md) and [docs/report-format.md](./docs/report-format.md).
+**Status:** Phases 1–4 (detection, config, policy engine, audit report and its Markdown view) are complete, but the Action is not wired to GitHub yet. Next: Phase 5 (GitHub adapter). See [docs/ROADMAP.md](./docs/ROADMAP.md), [docs/configuration.md](./docs/configuration.md) and [docs/report-format.md](./docs/report-format.md).
 
 ## Quick start (placeholder)
 

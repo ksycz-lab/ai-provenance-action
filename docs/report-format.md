@@ -124,3 +124,14 @@ Each range is `{ "start": 10, "end": 24 }`, inclusive, numbered on the new side 
 | `truncated-files`    | More changed files than could be read (REST limit 3000, or `limits.max-files`).                           |
 | `unknown-lines`      | At least one AI-touched file has `lines: "unknown"`.                                                      |
 | `lines-as-of-commit` | At least one AI-touched file has line ranges. They describe each commit, not the final state of the PR.   |
+
+## Job summary and PR comment
+
+`renderMarkdown(report, { variant })` turns the report into Markdown for the job summary (`summary`) and the sticky PR comment (`comment`). It reads only the report, never raw GitHub data. Examples for each outcome are in [`test/__snapshots__/`](../test/__snapshots__/) (`P4-M2.pass.md`, `P4-M2.warn.md`, `P4-M2.fail.md`, `P4-M2.no-ai.md`).
+
+- The first line is the verdict with an icon **and** a word (✅ Pass, ⚠️ Warn, ❌ Fail), so it does not depend on colour.
+- Then a table of gates, then collapsible lists of AI-tagged commits and touched files, each capped at 50 entries ("…and N more, see the JSON report").
+- A PR with no AI-tagged commits gets a single line.
+- The comment starts with the hidden marker `<!-- ai-provenance-action -->`, so the Action can find and update its own comment.
+- The comment stays under GitHub's limit of 65 536 characters: if very long paths push it over, the lists shrink until it fits.
+- All text that comes from people (commit subjects, trailer values, file paths, logins) is escaped: HTML and Markdown characters become entities, and `@` and `#` get an invisible word joiner so nobody is mentioned and no issue is linked.
