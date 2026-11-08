@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P3 complete. Next: P4-M1 JSON report.
+**Current focus:** P0–P3 and P4-M1 complete. Next: P4-M2 Markdown rendering.
 
 ---
 
@@ -149,7 +149,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | 1 | Detection core | ✅ Completed | Pure trailer parsing, rule matching and diff-to-lines mapping |
 | 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
-| 4 | Audit report | ⏳ Planned | Versioned JSON report and escaped Markdown rendering |
+| 4 | Audit report | 🚧 In progress | Versioned JSON report and escaped Markdown rendering |
 | 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
 | 7 | Release and Marketplace | ⏳ Planned | README, threat model, release automation, `v1` tag |
@@ -587,12 +587,12 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 # Phase 4 — Audit report
 
-**Status:** ⏳ Planned · **Focus:** one versioned JSON document, and one safe Markdown view of it.
+**Status:** 🚧 In progress · **Focus:** one versioned JSON document, and one safe Markdown view of it.
 
 ## P4-M1 — JSON report and schema
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P1-M3, P3-M1
 
 ### Goal
@@ -613,19 +613,26 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 | P4-M1-04 | Truncation and unknown-lines limitations are listed when present |
 | P4-M1-05 | Commit messages are not included in full, only SHA, subject (max 200 characters) and matched trailers, to keep the artifact small and avoid leaking long bodies |
 | P4-M1-06 | Snapshot test of the full fixture report (reviewed in PR diffs) |
+| P4-M1-07 | `docs/report-format.md` mentions every field in the report schema (doc test, like P2-M1-10) |
 
 ### Acceptance criteria
 
-- [ ] All P4-M1 cases pass
-- [ ] `docs/report-format.md` documents every field and the versioning policy
+- [x] All P4-M1 cases pass
+- [x] `docs/report-format.md` documents every field and the versioning policy
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `buildReport(input)` in `src/core/build-report.ts` combines the PR commits, the classification, the aggregated AI changes and the policy result into one document that validates against `schema/report.v1.schema.json` (`schemaVersion: "1.0.0"`). `serializeReport()` writes it as pretty JSON with a trailing newline.
+
+**Architectural decisions:** The builder stays pure: the clock (`generatedAt: Date`) and the config `sha256` come in through the input, so hashing and file reads stay in the adapter. Every object is rebuilt with a fixed key order and files are sorted by path, so the same input gives byte-identical output whatever order the caller used. Commits keep only SHA, author, a subject cut to 200 code points (with `…`) and the matched reasons; the message body never reaches the report. `limitations[]` uses stable codes (`declarations-only` always, plus `truncated-commits`, `truncated-files`, `unknown-lines` with the affected files, and `lines-as-of-commit`). The policy `reason` is exposed as optional `verdictReason`.
+
+**Deviations:** Added P4-M1-07, a doc test that every schema field appears in `docs/report-format.md`. The snapshot is a JSON file (`test/__snapshots__/P4-M1.full-report.json`), excluded from Prettier so it stays byte-identical to the serializer output.
+
+**Tests implemented:** P4-M1-01 … P4-M1-07. The full fixture is built with the real `classifyCommits`, `mapChanges`/`aggregateAiChanges` and `evaluatePolicy` over the existing commit and patch fixtures.
 
 ## P4-M2 — Markdown rendering and escaping
 
@@ -1047,7 +1054,7 @@ P0-M1 Scaffold
 | P3-M1 — Evaluation engine and enforce/warn | ✅ Completed | 2026-11-07 |
 | P3-M2 — Mutation-score gate | ✅ Completed | 2026-11-07 |
 | P3-M3 — Required-label and approvals gates | ✅ Completed | 2026-11-07 |
-| P4-M1 — JSON report and schema | ⏳ Planned | — |
+| P4-M1 — JSON report and schema | ✅ Completed | 2026-11-08 |
 | P4-M2 — Markdown rendering and escaping | ⏳ Planned | — |
 | P5-M1 — REST data fetching | ⏳ Planned | — |
 | P5-M2 — Config from the base branch | ⏳ Planned | — |
@@ -1061,7 +1068,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P3 complete. Next: P4-M1.
+**Phase status:** P0–P3 complete, P4 in progress. Next: P4-M2.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration

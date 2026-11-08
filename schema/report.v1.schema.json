@@ -2,10 +2,195 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ksycz/ai-provenance-action/schema/report.v1.schema.json",
   "title": "AI Provenance Report v1",
+  "description": "Evidence that supports an audit: which pull-request changes were declared as AI-assisted, which policy gates ran on them, and the result. It does not certify compliance or detect AI-written code.",
   "type": "object",
   "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "action",
+    "generatedAt",
+    "run",
+    "pullRequest",
+    "config",
+    "commits",
+    "aiChanges",
+    "gates",
+    "verdict",
+    "limitations"
+  ],
   "properties": {
-    "schemaVersion": { "type": "string", "const": "1.0.0" }
+    "schemaVersion": {
+      "description": "Report format version (semver). Additive fields bump minor, breaking changes bump major.",
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "commitSha"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "commitSha": { "$ref": "#/$defs/nullableSha" }
+      }
+    },
+    "generatedAt": {
+      "description": "When the report was built, ISO 8601 in UTC.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "workflow", "runId", "runAttempt", "event"],
+      "properties": {
+        "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+        "workflow": { "type": "string" },
+        "runId": { "type": "integer", "minimum": 0 },
+        "runAttempt": { "type": "integer", "minimum": 1 },
+        "event": { "type": "string" }
+      }
+    },
+    "pullRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "url", "baseSha", "headSha", "author"],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "url": { "type": "string", "pattern": "^https://" },
+        "baseSha": { "$ref": "#/$defs/sha" },
+        "headSha": { "$ref": "#/$defs/sha" },
+        "author": { "type": ["string", "null"] }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "path", "sha256"],
+      "properties": {
+        "source": { "enum": ["base-branch", "defaults"] },
+        "path": { "type": "string" },
+        "sha256": {
+          "description": "SHA-256 of the config file as read from the base branch; null when defaults were used.",
+          "oneOf": [
+            { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "commits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sha", "author", "subject", "aiTagged", "reasons"],
+        "properties": {
+          "sha": { "$ref": "#/$defs/sha" },
+          "author": { "type": ["string", "null"] },
+          "subject": { "type": "string", "maxLength": 200 },
+          "aiTagged": { "type": "boolean" },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["rule", "matched"],
+              "properties": {
+                "rule": { "type": "string", "pattern": "^(trailer|label):" },
+                "matched": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "aiChanges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "status", "lines"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "status": {
+            "enum": [
+              "added",
+              "modified",
+              "removed",
+              "renamed",
+              "copied",
+              "changed",
+              "unchanged"
+            ]
+          },
+          "previousFilename": { "type": "string" },
+          "lines": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["start", "end"],
+                  "properties": {
+                    "start": { "type": "integer", "minimum": 1 },
+                    "end": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              },
+              { "const": "unknown" }
+            ]
+          }
+        }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "mode", "result", "message"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "minLength": 1 },
+          "mode": { "enum": ["enforce", "warn"] },
+          "result": { "enum": ["pass", "fail", "skipped", "error"] },
+          "message": { "type": "string" },
+          "details": {
+            "description": "Gate-specific evidence, for example mutation score, threshold and mutant counts."
+          }
+        }
+      }
+    },
+    "verdict": { "enum": ["pass", "warn", "fail"] },
+    "verdictReason": { "enum": ["no-ai-changes", "truncated", "report-only"] },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "enum": [
+              "declarations-only",
+              "truncated-commits",
+              "truncated-files",
+              "unknown-lines",
+              "lines-as-of-commit"
+            ]
+          },
+          "message": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
   },
-  "required": ["schemaVersion"]
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "nullableSha": {
+      "oneOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }]
+    }
+  }
 }

@@ -31255,7 +31255,7 @@ function info(message) {
     coreExports.info(message);
 }
 
-/** Placeholder until P4-M1 builds the full report envelope. */
+/** Action identity, also written to the report's `action` block (P4-M1). */
 const ACTION_NAME = "ai-provenance-action";
 const DEFAULT_ACTION_VERSION = "0.0.0";
 function actionVersion(envVersion) {

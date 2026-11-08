@@ -1,4 +1,4 @@
-/** Placeholder until P4-M1 builds the full report envelope. */
+/** Action identity, also written to the report's `action` block (P4-M1). */
 export const ACTION_NAME = "ai-provenance-action" as const;
 
 export const DEFAULT_ACTION_VERSION = "0.0.0";
