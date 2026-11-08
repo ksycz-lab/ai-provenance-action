@@ -2,7 +2,7 @@
 
 A milestone plan and progress log for **ai-provenance-action**: a reusable GitHub Action that records which pull-request changes were AI-assisted, applies a policy to them, and produces an audit report.
 
-**Current focus:** P0–P4 complete. Next: P5-M1 REST data fetching.
+**Current focus:** P0–P4 and P5-M1 complete. Next: P5-M2 config from the base branch.
 
 ---
 
@@ -150,7 +150,7 @@ When the file is missing, built-in defaults apply: the four trailer rules from t
 | 2 | Configuration | ✅ Completed | YAML config schema, defaults, validation errors |
 | 3 | Policy engine | ✅ Completed | Gate evaluation, enforce/warn, Stryker mutation score, label and approval gates |
 | 4 | Audit report | ✅ Completed | Versioned JSON report and escaped Markdown rendering |
-| 5 | GitHub adapter | ⏳ Planned | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
+| 5 | GitHub adapter | 🚧 In progress | REST fetching with pagination and limits, outputs, summary, artifact, sticky comment, fork handling |
 | 6 | End-to-end and dogfooding | ⏳ Planned | Self-test workflows running the bundled Action on real PRs |
 | 7 | Release and Marketplace | ⏳ Planned | README, threat model, release automation, `v1` tag |
 | 8 | Integration with playwright-test-ai-inspector | ⏳ Planned | Adopt the Action, demo PR, cross-linked READMEs |
@@ -688,12 +688,12 @@ Two gates over data the adapter already fetched: PR labels, and PR reviews reduc
 
 # Phase 5 — GitHub adapter
 
-**Status:** ⏳ Planned · **Focus:** a thin REST layer, tested with `nock`, that feeds the pure core and publishes its outputs.
+**Status:** 🚧 In progress · **Focus:** a thin REST layer, tested with `nock`, that feeds the pure core and publishes its outputs.
 
 ## P5-M1 — REST data fetching with pagination and limits
 
-**Status:** ⏳ Planned
-**Completed:** —
+**Status:** ✅ Completed
+**Completed:** 2026-11-08
 **Dependencies:** P1-M3
 
 ### Goal
@@ -711,19 +711,27 @@ Fetch everything the core needs with REST only: PR metadata and labels, PR commi
 | P5-M1-05 | A 403 secondary rate limit is retried once with `retry-after`, then fails with a clear message |
 | P5-M1-06 | Running on a non-PR event (`push`) fails fast with "this Action needs a pull_request event" |
 | P5-M1-07 | No GraphQL endpoint is ever called (nock rejects `/graphql`) |
+| P5-M1-08 | Other errors (404, a plain 403 without `retry-after`, any non-403/429 status even with `retry-after`) are not retried |
+| P5-M1-09 | Once `max-files` is reached, later AI-tagged commits are not fetched at all |
 
 ### Acceptance criteria
 
-- [ ] All P5-M1 cases pass with no network access
-- [ ] Number of API calls for a no-AI PR is ≤ 3 (asserted)
+- [x] All P5-M1 cases pass with no network access
+- [x] Number of API calls for a no-AI PR is ≤ 3 (asserted)
 
 ### Completion checklist
 
-- [ ] Implementation notes filled in
+- [x] Implementation notes filled in
 
 ### Implementation notes
 
-_To be filled in after completion._
+**Summary:** `src/adapters/fetch-pull-request.ts` adds `pullRequestRef(context)` (fails fast on a non-PR event) and `gatherPullRequestData(client, ref, config)`. It reads the PR (`GET /pulls/{n}`), its commits (`GET /pulls/{n}/commits`, `per_page=100`, paginated), classifies them with the core, and only when something is AI-tagged fetches files per tagged commit (`GET /commits/{sha}`, following `Link` pages past 300 files) and the reviews. A no-AI PR costs 2 calls.
+
+**Architectural decisions:** The Octokit client is passed in. Production code will use `getOctokit(token)` from `@actions/github`. Tests use the same real Octokit with Node's built-in `fetch`, so `nock` sees every request with real URLs, headers and pagination. The default client sends through its own `undici` dispatcher, which `nock` does not intercept. Every API step goes through `withRetry`: a 403 or 429 with `retry-after` (or a "secondary rate limit" message) waits and retries once, then fails with "re-run the job later"; any other error is thrown unchanged. `sleep` is injectable so tests do not wait. Commits beyond `max-commits`, or fewer listed than the PR's `commits` count (REST stops at 250), set `truncated.commits`. Files stop at `max-files` across all tagged commits and set `truncated.files`. Fork PRs are recorded (`isFork`) for P5-M4.
+
+**Deviations:** Reviews are fetched only when a commit is AI-tagged, since gates are skipped otherwise; this keeps a no-AI PR at 2 calls instead of 3. Added P5-M1-08 and P5-M1-09, written after the code. Each was checked by breaking the code on purpose; the first try showed the 403/429 status check was untested, so P5-M1-08 gained a 404-with-`retry-after` case.
+
+**Tests implemented:** P5-M1-01 … P5-M1-09 in `test/P5-M1.fetch-pull-request.test.ts`, all with `nock.disableNetConnect()`.
 
 ## P5-M2 — Config from the base branch
 
@@ -1066,7 +1074,7 @@ P0-M1 Scaffold
 | P3-M3 — Required-label and approvals gates | ✅ Completed | 2026-11-07 |
 | P4-M1 — JSON report and schema | ✅ Completed | 2026-11-08 |
 | P4-M2 — Markdown rendering and escaping | ✅ Completed | 2026-11-08 |
-| P5-M1 — REST data fetching | ⏳ Planned | — |
+| P5-M1 — REST data fetching | ✅ Completed | 2026-11-08 |
 | P5-M2 — Config from the base branch | ⏳ Planned | — |
 | P5-M3 — Outputs, job summary and artifact | ⏳ Planned | — |
 | P5-M4 — Sticky PR comment and fork PRs | ⏳ Planned | — |
@@ -1078,7 +1086,7 @@ P0-M1 Scaffold
 | P8-M2 — Demo PR | ⏳ Planned | — |
 | P8-M3 — Cross-linked READMEs | ⏳ Planned | — |
 
-**Phase status:** P0–P4 complete. Next: P5-M1.
+**Phase status:** P0–P4 complete, P5 in progress. Next: P5-M2.
 
 - 21 milestones across 9 phases (0-8), ~140 test cases
 - v1 scope ends at P7-M3; Phase 8 is the portfolio integration
