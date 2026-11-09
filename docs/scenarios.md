@@ -1,3 +1,5 @@
+Fork scenario test
+
 # End-to-end scenarios
 
 The `e2e` workflow (`.github/workflows/e2e.yml`) runs the bundled Action (`uses: ./`) on every pull request to `main`, with this repository's own policy (`.github/ai-provenance.yml`, mutation gate at 80 % on AI-touched files). Each scenario below is a long-lived pull request that shows one outcome. Links and screenshots are added once the runs exist.
