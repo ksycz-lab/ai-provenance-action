@@ -1,4 +1,5 @@
 import eslint from "@eslint/js";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
@@ -6,6 +7,10 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     ignores: ["dist/**", "node_modules/**", "coverage/**", ".dependency-cruiser.cjs"],
+  },
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ["src/core/**/*.ts"],

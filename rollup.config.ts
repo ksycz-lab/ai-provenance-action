@@ -6,7 +6,7 @@ import typescript from "@rollup/plugin-typescript";
 export default {
   input: "src/main.ts",
   output: {
-    file: "dist/index.js",
+    file: "dist/index.cjs",
     format: "cjs",
     sourcemap: true,
     exports: "auto",

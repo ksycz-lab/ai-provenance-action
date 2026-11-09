@@ -1,0 +1,66 @@
+name: e2e
+
+# Runs the bundled Action (uses: ./) on this repository's own pull requests.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write # sticky PR comment
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    outputs:
+      ai_tagged: ${{ steps.audit.outputs.ai_tagged }}
+      ai_files: ${{ steps.audit.outputs.ai_files }}
+      verdict: ${{ steps.audit.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: audit
+        uses: ./
+        with:
+          mutation-report: e2e/mutation.json
+          pr-comment: "true"
+
+  provenance-warn:
+    # The same policy in warn mode: a failing gate gives a warning, the job stays green.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./
+        with:
+          config-path: .github/ai-provenance.warn.yml
+          mutation-report: e2e/mutation.json
+          report-path: ai-provenance-warn.json
+          upload-artifact: "false"
+
+  ai-only:
+    # Runs only when the PR has AI-tagged commits (P6-M1-05).
+    needs: provenance
+    if: always() && needs.provenance.outputs.ai_tagged == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show AI-touched files
+        env:
+          AI_FILES: ${{ needs.provenance.outputs.ai_files }}
+        run: echo "AI-tagged changes in $AI_FILES"
+
+  validate-report:
+    # Downloads the report artifact and checks it against the schema (P6-M1-08).
+    needs: provenance
+    if: always() && needs.provenance.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v7
+        with:
+          name: ai-provenance-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: artifact
+      - run: node scripts/validate-report.mjs artifact/ai-provenance-report.json

@@ -39,4 +39,4 @@ outputs:
     description: Overall policy result (pass, warn, or fail)
 runs:
   using: node24
-  main: dist/index.js
+  main: dist/index.cjs

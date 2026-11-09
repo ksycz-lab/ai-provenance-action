@@ -1,0 +1,12 @@
+# Policy for this repository's own pull requests (dogfooding, P6-M1).
+# AI-touched files need a mutation score of at least 80 % when a Stryker report
+# is present at e2e/mutation.json; ordinary PRs have none, so the gate is skipped.
+version: 1
+policy:
+  mode: enforce
+  gates:
+    - id: mutation
+      type: mutation-score
+      threshold: 80
+      scope: ai-files
+      on-missing: skip
