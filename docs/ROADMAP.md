@@ -66,7 +66,7 @@ The output is **evidence that supports an audit** under frameworks such as ISO/I
 | Coverage | ≥ 95 % lines for `src/core/`, ≥ 80 % overall, enforced in CI |
 | Config validation | JSON Schema (`schema/config.v1.schema.json`) validated with Ajv; errors point to the YAML path |
 | Report schema | `schema/report.v1.schema.json`, `schemaVersion: "1.0.0"` (semver: additive fields bump minor, breaking changes bump major) |
-| Bundler | Rollup to `dist/index.js`, committed. The CI job `check-dist` rebuilds and fails on `git diff --exit-code dist/` |
+| Bundler | Rollup to `dist/index.cjs` (CommonJS; `.cjs` because the package is `"type": "module"`), committed. The CI job `check-dist` rebuilds and fails on `git diff --exit-code dist/` |
 | Lint / format | ESLint (typescript-eslint) and Prettier |
 | Releases | Semver tags (`v1.0.0`) plus a moving major tag (`v1`), moved by a release workflow |
 | Test case IDs | `P{phase}-M{milestone}-{nn}`, e.g. `P1-M1-01`; used verbatim in test names |
@@ -888,6 +888,7 @@ An `e2e.yml` workflow runs `uses: ./` on this repo's own PRs, and a set of long-
 | P6-M1-06 | Squash-merging a tagged PR: the report artifact from the PR run still lists the original trailers |
 | P6-M1-07 | A PR from a test fork: comment skipped, summary and artifact present |
 | P6-M1-08 | The downloaded artifact validates against `schema/report.v1.schema.json` in a follow-up job |
+| P6-M1-09 | The bundle named in `action.yml` starts under this repo's `package.json` (regression test for the first real run, which failed with `require is not defined`) |
 
 ### Acceptance criteria
 
